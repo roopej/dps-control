@@ -9,6 +9,10 @@ Please check first `dps_config.py` file. It has very few settings but they are i
 
 Also, please set the maximum voltage and current according to your power supply specs.
 
+If you get permission errors about your tty port it might be that your user needs to be added to the `dialout` group.
+
+`sudo usermod -aG dialout $(whoami)`
+
 ## Running
 
 You can run the CLI in virtual python environment with script `./setup.sh`
