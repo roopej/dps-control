@@ -36,7 +36,6 @@ class Register(IntEnum):
     VOLTS_UIN = 0x5
     PWR_ONOFF = 0x9
 
-
 def decode_modbus_status_response(b):
     """Decode Modbus response and return printable structure"""
     if len(b) != 20:
@@ -79,6 +78,16 @@ def set_voltage(volts):
         print('Voltage must be between %d and %d' % (conf.min_voltage, conf.max_voltage))
         return
     INSTRUMENT.write_register(Register.VOLTS_SET, value=volts, number_of_decimals=2)
+
+def get_voltage():
+    """Get voltage setting"""
+    volts = INSTRUMENT.read_register(Register.VOLTS_SET, number_of_decimals=2)
+    return volts
+
+def get_current():
+    """Get current setting"""
+    amps = INSTRUMENT.read_register(Register.AMPS_SET, number_of_decimals=3)
+    return amps
 
 def set_current(amps):
     """Set current of DPS device"""
@@ -203,8 +212,13 @@ def initialize():
         INSTRUMENT.mode = minimalmodbus.MODE_RTU
         INSTRUMENT.close_port_after_each_call = False
         INSTRUMENT.write_register(Register.PWR_ONOFF, value=0, number_of_decimals=0)
-
         print(INSTRUMENT)
+        print('\n')
+        a = get_current()
+        v = get_voltage()
+        print('Please note:')
+        print('Initial settings: \x1b[1;31m%.2f V, %.3f A\x1b[0m' % (v, a))
+        print('Output is set to these values if switched on now')
     except (TypeError, ValueError, ModbusException, SerialException) as error:
         print(error)
         return False
