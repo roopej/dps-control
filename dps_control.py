@@ -1,3 +1,4 @@
+"""Simple script to control DPS5005 (and similar) power supplies"""
 #!/usr/bin/env python
 
 import time
@@ -18,6 +19,9 @@ minimalmodbus.BAUDRATE = 19200
 minimalmodbus.TIMEOUT = 0.5
 minimalmodbus.CLOSE_PORT_AFTER_EACH_CALL = False
 INSTRUMENT = None
+PORT = conf.ttyDevice
+
+# In case of problems, set to True to see better debug prints
 DEBUG = True
 
 class ValueType(IntEnum):
@@ -30,7 +34,6 @@ class Register(IntEnum):
     VOLTS = 0x0
     AMPS = 0x1
 
-# Decode modbus status response
 def decode_modbus_status_response(b):
     """Decode Modbus response and return printable structure"""
     if len(b) != 20:
@@ -54,7 +57,6 @@ def decode_modbus_status_response(b):
 
     return rv
 
-# Set device voltage
 def set_voltage(volts):
     """Set voltage of DPS device"""
     if (volts > conf.max_voltage or volts < conf.min_voltage):
@@ -62,8 +64,6 @@ def set_voltage(volts):
         return
     INSTRUMENT.write_register(Register.VOLTS, value=volts, number_of_decimals=2)
 
-
-# Set device current
 def set_current(amps):
     """Set current of DPS device"""
     if (amps > conf.max_current or amps < conf.min_current):
@@ -71,20 +71,16 @@ def set_current(amps):
         return
     INSTRUMENT.write_register(Register.AMPS, value=amps, number_of_decimals=3)
 
-# Read registers for status
 def read_registers():
     """Read all registers of DPS device"""
     registers = INSTRUMENT.read_registers(registeraddress=0x0, number_of_registers=20)
     return registers
 
-
-# Print command prompt and return input
 def command_prompt():
     """Get command from prompt"""
     cmd = input('DPS: ')
     return cmd
 
-# Check that value can be converted to number of certain type
 def validateInput(val, valtype):
     """Check that value in correct format"""
     ret = True
@@ -98,7 +94,6 @@ def validateInput(val, valtype):
         ret = False
     return ret
 
-# Print some help
 def print_help():
     """Print generic help for commands available"""
     print('dps-control v%s' % (VERSION))
@@ -106,17 +101,23 @@ def print_help():
     print('Available commands:')
     print('\ta <value>\tSet current to value (float)')
     print('\tv <value>\tSet voltage to value (float)')
+    print('\tp <port>\tSet device port to <port> eg. /dev/ttyUSB0')
     print('\tl\t\tLive monitoring mode, exit with [CTRL-C]')
     print('\th\t\tPrint this text')
     print('\tq\t\tQuit program')
 
-# Parse command and execute it
+def suggest_help():
+    print("Invalid command. Type h for help.")
+
 def parse_command(cmd):
     """Parse input command"""
     ret = True
     try:
         main_cmd = cmd.split()[0].lower()
         if main_cmd == 'v':
+            if len(main_cmd.split()) < 2:
+                suggest_help()
+                return ret
             volts = cmd.split()[1]
             if validateInput(volts, ValueType.FLOAT):
                 volts = "{:.2f}".format(float(volts))
@@ -124,6 +125,9 @@ def parse_command(cmd):
                 print(msg)
                 set_voltage(float(volts))
         elif main_cmd == 'a':
+            if len(main_cmd.split()) < 2:
+                suggest_help()
+                return ret
             amps = cmd.split()[1]
             if validateInput(amps, ValueType.FLOAT):
                 amps = "{:.3f}".format(float(amps))
@@ -133,6 +137,15 @@ def parse_command(cmd):
         elif main_cmd == 'i':
             print('Getting info...')
             print(decode_modbus_status_response(read_registers()))
+        elif main_cmd == 'p':
+            if len(main_cmd.split()) < 2:
+                suggest_help()
+                return ret
+            global PORT
+            PORT = cmd.split()[1]
+            msg = '%s: %s' % ('Setting serial device port to', PORT)
+            print(msg)
+            initialize()
         elif main_cmd == 'l':
             print('Running live monitoring, press [CTRL-C] to stop...')
 
@@ -154,14 +167,12 @@ def parse_command(cmd):
         print(error)
         return True
 
-
-
 def initialize():
     """Initialize Modbus"""
     print('Initializing...')
     global INSTRUMENT
     try:
-        INSTRUMENT = minimalmodbus.Instrument(port=conf.ttyDevice, slaveaddress=conf.slave)
+        INSTRUMENT = minimalmodbus.Instrument(port=PORT, slaveaddress=conf.slave)
         INSTRUMENT.debug = DEBUG
     except (TypeError, ValueError, ModbusException, SerialException) as error:
         print(error)
@@ -169,7 +180,6 @@ def initialize():
 
     return True
 
-# Main program
 def main():
     """Main program"""
     running = True
