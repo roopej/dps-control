@@ -9,3 +9,7 @@ max_voltage = 50.00
 min_voltage = 0.00
 max_current = 5.000
 min_current = 0.000
+
+# Switch power off when starting CLI
+# Recommended to have this True for safety reasons
+start_power_off = True
