@@ -1,24 +1,14 @@
 #!/usr/bin/env python
 
+import time
 import minimalmodbus
 from enum import Enum
 from serial import SerialException
 from minimalmodbus import ModbusException
 import dps_config as conf
 
-# General parameters
-# ttyDevice='/dev/ttyUSB0'
-# ttyDevice='/dev/ttyS0'
-# volts_address = 0x0
-# amps_address = 0x1
-# max_voltage = 50
-# min_voltage = 0
-# max_current = 5
-# min_current = 0
-
-
-volts_address = 0x0
-amps_address = 0x1
+# Constants
+VERSION = "0.1"
 
 # Set Modbus parameters
 minimalmodbus.MODE_RTU = 'rtu'
@@ -70,7 +60,7 @@ def set_voltage(volts):
     except (TypeError, ValueError, ModbusException, SerialException) as error:
         print(error)
 
-# Set device voltage
+# Set device current
 def set_current(amps):
     if (amps > conf.max_current or amps < conf.min_current):
         print("Current must be between %d and %d" % (conf.min_current, conf.max_current))
@@ -80,7 +70,7 @@ def set_current(amps):
     except (TypeError, ValueError, ModbusException, SerialException) as error:
         print(error)
 
-# Read registers
+# Read registers for status
 def read_registers():
     try:
         registers = instrument.read_registers(registeraddress=0x0, number_of_registers=20)
@@ -97,41 +87,67 @@ def commandPrompt():
 # Check that value can be converted to number of certain type
 def validateInput(val, valtype):
     ret = True
-    try:
-        if (valtype == ValueType.FLOAT):
-            val = float(val)
-        elif (valtype == ValueType.INT):
-            val = int(val)
-    except ValueError:
+
+    if (valtype == ValueType.FLOAT):
+        val = float(val)
+    elif (valtype == ValueType.INT):
+        val = int(val)
+    else:
         print("Invalid value")
-        ret = False;
+        ret = False
     return ret
+
+# Print some help
+def printHelp():
+    print("dps-control v%s" % (VERSION))
+    print("-----------------------------------------------------------")
+    print("Available commands:")
+    print("\ta <value>\tSet current to value (float)")
+    print("\tv <value>\tSet voltage to value (float)")
+    print("\tl\t\tLive monitoring mode, exit with [CTRL-C]")
+    print("\th\t\tPrint this text")
+    print("\tq\t\tQuit program")
 
 # Parse command and execute it
 def parseCommand(cmd):
     ret = True
-    mainCmd = cmd.split()[0].lower()
-    if (mainCmd == 'v'):
-        volts = cmd.split()[1]
-        if (validateInput(volts, ValueType.FLOAT)):
-            volts = "{:.2f}".format(float(volts))
-            msg = "%s %s %s" % ('Set voltage to:', volts, 'V')
-            print(msg)
-            set_voltage(float(volts))
-    elif (mainCmd == 'a'):
-        amps = cmd.split()[1]
-        if (validateInput(amps, ValueType.FLOAT)):
-            amps = "{:.3f}".format(float(amps))
-            msg = "%s %s %s" % ('Set current to:', amps, 'A')
-            print(msg)
-            set_current(float(amps))
-    elif (mainCmd == 'i'):
+    try:
+        mainCmd = cmd.split()[0].lower()
+        if (mainCmd == 'v'):
+            volts = cmd.split()[1]
+            if (validateInput(volts, ValueType.FLOAT)):
+                volts = "{:.2f}".format(float(volts))
+                msg = "%s %s %s" % ('Set voltage to:', volts, 'V')
+                print(msg)
+                set_voltage(float(volts))
+        elif (mainCmd == 'a'):
+            amps = cmd.split()[1]
+            if (validateInput(amps, ValueType.FLOAT)):
+                amps = "{:.3f}".format(float(amps))
+                msg = "%s %s %s" % ('Set current to:', amps, 'A')
+                print(msg)
+                set_current(float(amps))
+        elif (mainCmd == 'i'):
             print("Getting info...")
             print(decode_modbus_status_response(read_registers()))
+        elif (mainCmd == 'l'):
+            print("Running live monitoring, press [CTRL-C] to stop...")
 
-    elif (mainCmd == 'q'):
-        ret = False
-    return ret
+            try:
+                while True:
+                    print("Monitoring...")
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                pass
+
+        elif (mainCmd == 'h'):
+            printHelp()
+        elif (mainCmd == 'q'):
+            ret = False
+        return ret
+    except (TypeError, ValueError, ModbusException, SerialException) as error:
+        print(error)
+
 
 
 def initialize():
@@ -158,7 +174,8 @@ def main():
     # Main loop
     while running:
         cmd = commandPrompt()
-        running = parseCommand(cmd)
+        if (len(cmd)):
+            running = parseCommand(cmd)
 
 if __name__ == "__main__":
     main()
