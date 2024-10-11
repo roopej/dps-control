@@ -1,5 +1,5 @@
 # TTY device to use for communication
-ttyDevice='/dev/ttyS0'
+ttyDevice='/dev/ttyUSB0'
 
 # Slave number of the DPS device
 slave=1
