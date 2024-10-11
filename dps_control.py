@@ -65,8 +65,11 @@ def decode_modbus_monitor_response(b):
     if len(b) != 8:
         print('Invalid Modbus response')
         return
-
-    ret_str = '\t%s V     %s A     %s W     %s Vin' % (round(b[0] / 100.0, 2), round(b[1] / 1000.0, 3), round(b[2] / 100.0,2), round(b[3] / 100.0, 2))
+    v = b[0] / 100.0
+    a = b[1] / 1000.0
+    p = b[2] / 100.0
+    vin = b[3] / 100.0
+    ret_str = '\t%.2f V     %.3f A     %.2f W     %.2f Vin' % (v,a,p,vin)
     return ret_str
 
 
