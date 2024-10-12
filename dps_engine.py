@@ -71,7 +71,7 @@ class DPSEngine:
         current_status = self.get_power()
         self.set_power(not current_status)
 
-    def set_volts(self, volts: float) - None:
+    def set_volts(self, volts: float) -> None:
         """Set voltage of DPS device"""
         #TODO: Limit check
         self.write_register(DPSRegister.VOLTS_SET, volts, 2)

@@ -34,31 +34,17 @@ def event_monitor(name, event_queue):
             running = False
 
 def command_prompt(name, cmd_queue):
+    """Get input from command prompt until asked to quit.
+       Push commands to command queue for parsing"""
     running = True
     while running:
-        cmd = input('DPS>' )
+        cmd = input('DPS:> ')
         cmd_queue.put_nowait(cmd)
         if cmd == 'q':
             running = False
 
-
 if __name__ == '__main__':
-
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
         executor.submit(dps_engine, 'DPS_Engine', dps_commands, dps_events)
         executor.submit(event_monitor, 'Event_Monitor', dps_events)
         executor.submit(command_prompt, 'Command_Prompt', dps_commands)
-    # dps = threading.Thread(target=dps_engine, args=(1,dps_commands, dps_events))
-    # dps.start()
-    # eventmon = threading.Thread(target=event_monitor, args=(1, dps_events))
-    # eventmon.start()
-
-    # running = True
-    # while running:
-    #     cmd = input('DPS> ')e
-    #     dps_commands.put_nowait(cmd)
-    #     if cmd == 'q':
-    #         running = False
-
-    # dps.join()
-    # eventmon.join()
