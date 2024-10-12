@@ -1,5 +1,9 @@
-# Engine
-import time
+"""
+DPSEngine module communicates with DPS power supply device through
+Modbus protocol
+"""
+
+from typing import List, Union, Dict
 import minimalmodbus
 from minimalmodbus import ModbusException
 from serial import SerialException
@@ -16,14 +20,31 @@ class DPSRegister(IntEnum):
     VOLTS_UIN = 0x5
     PWR_ONOFF = 0x9
 
+def exception_handler(func):
+    """Exception handle for decorator"""
+    def inner_function(*args, **kwargs):
+        try:
+            func(*args, **kwargs)
+        except ModbusException:
+            print(f"{func.__name__} ModbusException")
+        except SerialException:
+            print(f"{func.__name__} SerialException")
+        except TypeError:
+            print(f"{func.__name__} TypeError")
+        except ValueError:
+            print(f"{func.__name__} ValueError")
+    return inner_function
+
 class DPSEngine:
     """Class interacting with DPS5005 through Modbus protocol"""
-    def __init__(self, port=conf.port, slave=conf.slave):
+    def __init__(self, port: str, slave: int, debug : bool = False):
         """Constructor"""
         self.port = port
         self.instrument = None
         self.slave = slave
-        self.debug = conf.debug
+        self.debug = debug
+
+    @exception_handler
     def connect(self):
         """Connect to DPS through modbus"""
         self.instrument = minimalmodbus.Instrument(port=self.port, slaveaddress=self.slave)
@@ -36,77 +57,88 @@ class DPSEngine:
         print('Connect to DPS')
 
     # Getters and setters
-    def set_power(self, enable):
+    def set_power(self, enable: bool) -> None:
         """Switch power output ON/OFF"""
-        self.write_register(DPSRegister.PWR_ONOFF, enable, 0)
+        self.write_register(DPSRegister.PWR_ONOFF, int(enable), 0)
 
-    def get_power(self):
+    def get_power(self) -> float:
         """Get current power ON/OFF status"""
         power = self.read_register(DPSRegister.PWR_ONOFF, 0)
         return power
 
-    def toggle_power(self):
+    def toggle_power(self) -> None:
         """Toggle power ON<->OFF"""
         current_status = self.get_power()
         self.set_power(not current_status)
 
-    def set_volts(self, volts):
+    def set_volts(self, volts: float) - None:
         """Set voltage of DPS device"""
         #TODO: Limit check
         self.write_register(DPSRegister.VOLTS_SET, volts, 2)
 
-    def get_volts_set(self):
+    def get_volts_set(self) -> float:
         """Get set value of volts out, not necessary the actual out voltage atm"""
         volts = self.read_register(DPSRegister.VOLTS_SET, 2)
         return volts
 
-    def get_volts_out(self):
+    def get_volts_out(self) -> float:
         """Get voltage output at the moment"""
         volts = self.read_register(DPSRegister.VOLTS_OUT, 2)
         return volts
 
-    def set_amps(self, amps):
+    def set_amps(self, amps: float) -> None:
         """Set current of DPS device"""
         #TODO: Limit check
         self.write_register(DPSRegister.AMPS_SET, amps, 3)
 
-    def get_amps_set(self):
+    def get_amps_set(self) -> float:
         """Get set value of amps out, not necessary the actual out current atm"""
         volts = self.read_register(DPSRegister.AMPS_SET, 3)
         return volts
 
-    def get_amps_out(self):
+    def get_amps_out(self) -> float:
         """Get current output at the moment"""
         volts = self.read_register(DPSRegister.AMPS_OUT, 3)
         return volts
 
-    def get_power_out(self):
+    def get_power_out(self) -> float:
         """Get current power output"""
         power = self.read_register(DPSRegister.PWR_OUT, 2)
         return power
 
-    def get_status(self):
+    def get_status(self) -> List[int]:
         """Get dump of status variables of DPS, 20 registers starting from 0x0"""
         b = self.read_registers(0x0, 20)
         return b
 
     # Communication through Modbus
-    def write_register(self, address, value, num_decimals):
+    @exception_handler
+    def write_register(self, address: int, value: Union[int,float], num_decimals: int) -> None:
         """Write single register at at address"""
         self.instrument.write_register(address, value=value, number_of_decimals=num_decimals)
         print('Write register')
-    def read_register(self, address, num_decimals):
+
+    @exception_handler
+    def write_registers(self, address: int, values: List[int]) -> None:
+        """Write list of registers into address"""
+        self.instrument.write_registers(registeraddress=address, values=values)
+    
+    @exception_handler
+    def read_register(self, address: int, num_decimals: int) -> Union[int, float]:
         """Read single register from address"""
         retval = self.instrument.read_register(address, num_decimals)
         return retval
-    def read_registers(self, address, number):
+
+    @exception_handler
+    def read_registers(self, address: int, number: int) -> List[int]:
         """Read number of registers starting from address"""
-        registers = self.instrument.read_registers(registeraddress=address, number_of_registers=number)
+        registers = self.instrument.read_registers(registeraddress=address,
+                                                   number_of_registers=number)
         return registers
 
     # Utilities
-    def get_status_string(self):
-        """Get string representation of status dump"""
+    def get_status_string(self) -> Dict[str, float]:
+        """Get dictionary representation of status byte dump"""
         b = self.get_status()
         if len(b) != 20:
             print('Invalid status response from DPS device')
@@ -126,3 +158,6 @@ class DPSEngine:
                 'Firmware': str(b[12] / 10.0),
         }
         return st
+
+if __name__ == "__main__":
+    print('DPSEngine is not meant to be run standalone')
