@@ -1,4 +1,8 @@
-"""Controller class for DPS control"""
+"""
+Controller class for DPS control
+Owns the DPS state class and takes input commands
+as ASCII strings.
+"""
 from dps_state import DPSState
 from dps_engine import DPSEngine
 import dps_config as conf
@@ -6,6 +10,7 @@ import dps_config as conf
 class DPSController:
     """Handles logic and parsing commands"""
     def __init__(self) -> None:
+        # Model, read some values from config
         self.dps_state : DPSState = DPSState()
         self.dps_state.port = conf.ttyPort
         self.dps_state.slave = conf.slave
@@ -13,6 +18,8 @@ class DPSController:
         self.dps_state.max_amps = conf.max_current
         self.dps_state.min_volts = conf.min_voltage
         self.dps_state.max_volts = conf.max_voltage
+
+        # Instance to talk to DPS device through Modbus
         self.dps_engine = DPSEngine(self.dps_state.port, self.dps_state.slave)
 
     def connect(self) -> bool:
