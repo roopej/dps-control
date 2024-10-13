@@ -37,7 +37,7 @@ class DPSController:
 
     def connect(self) -> bool:
         """Start controller, connect to device"""
-        conn : DPSRet =  self.dps_engine.connect().code
+        conn : DPSRet =  self.dps_engine.connect()
         if not conn.code  == DPSRetCode.DPS_OK:
             print('ERROR: Cannot connect to DPS device. ' +
                   'Please check your port and slave configuration.')
@@ -56,6 +56,16 @@ class DPSController:
         """Handle connect command"""
         if len(cmd.split()) > 1:
             self.dps_state.port = cmd.split()[1]
+            self.connect()
+        return True
+
+    def handle_set_port(self, port) -> bool:
+        """Handle set port"""
+        print(len(port))
+        if len(port) == 0:
+            return False
+
+        self.dps_state.port = port
         return True
 
     def validate_float(self, value) -> bool:
@@ -90,32 +100,56 @@ class DPSController:
                 return False
             return True
 
-    def get_cmd_and_validate(self, cmd: str) -> tuple[Callable,str]:
-        """Check that command has required arguments"""
+    def get_cmd_and_validate(self, cmd: str) -> tuple[Callable,str,bool]:
+        """Get command handler and validate args
+
+        Args:
+            cmd (str): Command string
+
+        Returns:
+            tuple[Callable,str,bool]: (handler, args, requires_connection)
+        """
         main_cmd = cmd.split()[0].lower()
-        args = cmd.split()[1]
-        connected = self.dps_state.connected
 
-        if main_cmd == 'v':
-            return (self.handle_set_volts, args)
+        # Get args if available
+        args = str()
+        if len(cmd.split()) > 1:
+            args = cmd.split()[1]
+
+        if main_cmd == 'c':
+            return (self.handle_connect, args, False)
+        elif main_cmd == 'p':
+            return (self.handle_set_port, args, False)
+        elif main_cmd == 'v':
+            return (self.handle_set_volts, args, True)
         elif main_cmd == 'a':
-            return (self.handle_set_amps, args)
+            return (self.handle_set_amps, args, True)
         else:
-            return (None, '')
+            return (None, '', False)
 
-    def parse_command(self, cmd: str) -> bool:
+    def parse_command(self, cmd: str) -> tuple[bool,str]:
         """Parse input command and act upon it. Return false if quit requested"""
         print(f'Parser received: {cmd}')
 
-        #
+        # Special case for quitting program
+        if cmd == 'q':
+            return (False, 'Quit requested')
 
-        # Get handler and execute
-        handler = self.get_cmd_and_validate(cmd)
-        handler[0](handler[1])
+        # Tuple containing handler information
+        execute = self.get_cmd_and_validate(cmd)
 
-        if cmd == 'c':
-            self.connect()
-        elif cmd == 'q':
-            return False
-        return True
+        # If command requires connection and we are not connected
+        if bool(execute[2]) and not self.dps_state.connected:
+            return (True, 'You are not connected.')
+
+        if execute[0] is None:
+            return (True, 'Invalid command')
+
+        # Execute
+        ret = execute[0](execute[1])
+
+        if ret:
+            return (True, 'Success')
+
+        return (True, 'Failure')
 

@@ -18,7 +18,9 @@ class DPSCli:
         while self.running:
             cmd = self.command_prompt()
             print(f'Command given is: {cmd}')
-            self.running = self.controller.parse_command(cmd)
+            ret = self.controller.parse_command(cmd)
+            print(ret[1])
+            self.running = ret[0]
 
     def start(self):
         """Start CLI"""
