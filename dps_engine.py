@@ -87,12 +87,12 @@ class DPSEngine:
     # Getters and setters
     def set_power(self, enable: bool) -> DPSRet:
         """Switch power output ON/OFF"""
-        self.write_register(DPSRegister.PWR_ONOFF, int(enable), 0)
+        self.__write_register(DPSRegister.PWR_ONOFF, int(enable), 0)
         DPSRet(DPSRetCode.DPS_OK)
 
     def get_power(self) -> DPSRet:
         """Get current power ON/OFF status"""
-        power = self.read_register(DPSRegister.PWR_ONOFF, 0)
+        power = self.__read_register(DPSRegister.PWR_ONOFF, 0)
         return DPSRet(DPSRetCode.DPS_OK, str(power))
 
     def toggle_power(self) -> DPSRet:
@@ -104,65 +104,66 @@ class DPSEngine:
     def set_volts(self, volts: float) -> DPSRet:
         """Set voltage of DPS device"""
         #TODO: Limit check
-        self.write_register(DPSRegister.VOLTS_SET, volts, 2)
+        self.__write_register(DPSRegister.VOLTS_SET, volts, 2)
         return DPSRet(DPSRetCode.DPS_OK)
 
     def get_volts_set(self) -> DPSRet:
         """Get set value of volts out, not necessary the actual out voltage atm"""
-        volts = self.read_register(DPSRegister.VOLTS_SET, 2)
+        volts = self.__read_register(DPSRegister.VOLTS_SET, 2)
         return DPSRet(DPSRetCode.DPS_OK, str(volts))
 
     def get_volts_out(self) -> DPSRet:
         """Get voltage output at the moment"""
-        volts = self.read_register(DPSRegister.VOLTS_OUT, 2)
+        volts = self.__read_register(DPSRegister.VOLTS_OUT, 2)
         return DPSRet(DPSRetCode.DPS_OK, str(volts))
 
     def set_amps(self, amps: float) -> DPSRet:
         """Set current of DPS device"""
         #TODO: Limit check
-        self.write_register(DPSRegister.AMPS_SET, amps, 3)
+        self.__write_register(DPSRegister.AMPS_SET, amps, 3)
         return DPSRet(DPSRetCode.DPS_OK)
 
     def get_amps_set(self) -> DPSRet:
         """Get set value of amps out, not necessary the actual out current atm"""
-        volts = self.read_register(DPSRegister.AMPS_SET, 3)
+        volts = self.__read_register(DPSRegister.AMPS_SET, 3)
         return DPSRet(DPSRetCode.DPS_OK, str(volts))
 
     def get_amps_out(self) -> DPSRet:
         """Get current output at the moment"""
-        amps = self.read_register(DPSRegister.AMPS_OUT, 3)
+        amps = self.__read_register(DPSRegister.AMPS_OUT, 3)
         return DPSRet(DPSRetCode.DPS_OK, str(amps))
 
     def get_power_out(self) -> DPSRet:
         """Get current power output"""
-        power = self.read_register(DPSRegister.PWR_OUT, 2)
+        power = self.__read_register(DPSRegister.PWR_OUT, 2)
         return DPSRet(DPSRetCode.DPS_OK, str(power))
 
     def get_status(self) -> List[int]:
         """Get dump of status variables of DPS, 20 registers starting from 0x0"""
-        b = self.read_registers(0x0, 20)
+        b = self.__read_registers(0x0, 20)
         return b
 
+    # Private methods
     # Communication through Modbus, catch exceptions on these, used internally by class
     @exception_handler
-    def write_register(self, address: int, value: Union[int,float], num_decimals: int) -> None:
+    def __write_register(self, address: int, value: Union[int,float], num_decimals: int) -> None:
         """Write single register at at address"""
         self.instrument.write_register(address, value=value, number_of_decimals=num_decimals)
         print('Write register')
 
     @exception_handler
-    def write_registers(self, address: int, values: List[int]) -> None:
+    def __write_registers(self, address: int, values: List[int]) -> None:
         """Write list of registers into address"""
         self.instrument.write_registers(registeraddress=address, values=values)
 
     @exception_handler
-    def read_register(self, address: int, num_decimals: int) -> Union[int, float]:
+    def __read_register(self, address: int, num_decimals: int) -> Union[int, float]:
         """Read single register from address"""
         retval = self.instrument.read_register(address, num_decimals)
         return retval
 
     @exception_handler
-    def read_registers(self, address: int, number: int) -> List[int]:
+    def __read_registers(self, address: int, number: int) -> List[int]:
         """Read number of registers starting from address"""
         registers = self.instrument.read_registers(registeraddress=address,
                                                    number_of_registers=number)

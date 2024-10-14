@@ -1,32 +1,35 @@
 """
 Simple CLI to use DPS Control engine
 """
+
+from dps_controller import DPSController
+
 class DPSCli:
     """CLI view, passes commands to DPS Controller"""
     def __init__(self, controller):
         """Set up all variables"""
-        self.controller = controller
-        self.running = False
+        self.controller: DPSController = controller
+        self.running: bool = False
 
-    def command_prompt(self):
+    def command_prompt(self) -> str:
         """Get input from user and return command"""
-        command = input('DPS> ')
+        command: str = input('DPS> ')
         return command
 
-    def command_loop(self):
+    def command_loop(self) -> None:
         """Loop command prompt until cancelled"""
         while self.running:
-            cmd = self.command_prompt()
+            cmd: str = self.command_prompt()
             print(f'Command given is: {cmd}')
-            ret = self.controller.parse_command(cmd)
+            ret: tuple[bool, str] = self.controller.parse_command(cmd)
             print(ret[1])
-            self.running = ret[0]
+            if cmd == 'q':
+                self.running = False
 
-    def start(self):
+    def start(self) -> None:
         """Start CLI"""
         self.running = True
-        portinfo = self.controller.get_portinfo()
-        print(f'Connected:\t{portinfo['connected']}\nPort:\t\t{portinfo['port']}\nSlave:\t\t{portinfo['slave']}')
+        print(self.controller.get_portinfo()[1])
         self.command_loop()
 
 if __name__ == "__main__":
