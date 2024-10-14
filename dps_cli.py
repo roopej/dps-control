@@ -1,7 +1,7 @@
 """
 Simple CLI to use DPS Control engine
 """
-
+from queue import SimpleQueue
 from dps_controller import DPSController
 
 class DPSCli:
@@ -20,10 +20,26 @@ class DPSCli:
         """Loop command prompt until cancelled"""
         while self.running:
             cmd: str = self.command_prompt()
-            ret: tuple[bool, str] = self.controller.parse_command(cmd)
-            print(ret[1])
+
+            if len(cmd) == 0:
+                continue
+
             if cmd == 'q':
                 self.running = False
+            elif cmd == 'l':
+                print('Running live monitoring, press [CTRL-C] to stop...')
+                self.controller.start_events()
+                try:
+                    while True:
+                        event = self.controller.event_queue.get(block = True, timeout= None)
+                        print(f'Got event {event}')
+                except KeyboardInterrupt:
+                    self.controller.stop_events()
+                    print('\n')
+
+            ret: tuple[bool, str] = self.controller.parse_command(cmd)
+            print(ret[1])
+
 
     def start(self) -> None:
         """Start CLI"""
