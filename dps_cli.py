@@ -20,7 +20,6 @@ class DPSCli:
         """Loop command prompt until cancelled"""
         while self.running:
             cmd: str = self.command_prompt()
-            print(f'Command given is: {cmd}')
             ret: tuple[bool, str] = self.controller.parse_command(cmd)
             print(ret[1])
             if cmd == 'q':
