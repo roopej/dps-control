@@ -6,7 +6,7 @@ from dps_controller import DPSController
 
 class DPSCli:
     """CLI view, passes commands to DPS Controller"""
-    def __init__(self, controller):
+    def __init__(self, controller) -> None:
         """Set up all variables"""
         self.controller: DPSController = controller
         self.running: bool = False
@@ -24,7 +24,6 @@ class DPSCli:
             print(ret[1])
             if cmd == 'q':
                 self.running = False
-
 
     def start(self) -> None:
         """Start CLI"""

@@ -4,8 +4,11 @@ from dps_cli import DPSCli
 
 
 def main():
-    print('Starting...')
+    """Entry point to DPS Controller"""
+    # Create controller
     controller = DPSController()
+
+    # Create view and pass controller to it and start
     cli = DPSCli(controller)
     cli.start()
 
