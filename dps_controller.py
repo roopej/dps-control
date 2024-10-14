@@ -20,7 +20,7 @@ Monitor toggle ON/OFF:      m
 """
 from typing import Callable
 from dps_state import DPSState
-from dps_engine import DPSEngine, DPSRet, DPSRetCode
+from dps_engine import DPSEngine
 import dps_config as conf
 
 class DPSController:
@@ -41,8 +41,8 @@ class DPSController:
     def connect(self) -> tuple[bool,str]:
         """Start controller, connect to device"""
         print('Connecting...')
-        conn : DPSRet =  self.dps_engine.connect()
-        if not conn.code  == DPSRetCode.DPS_OK:
+        conn: tuple[bool, str] =  self.dps_engine.connect()
+        if not conn[0]:
             return False, 'ERROR: Cannot connect to DPS device.'
         return True, 'Connection successful'
 
@@ -57,7 +57,6 @@ class DPSController:
 
     def parse_command(self, cmd: str) -> tuple[bool,str]:
         """Parse input command and act upon it. Return false if quit requested"""
-        print(f'Parser received: {cmd}')
 
         # Special case for quitting program
         if cmd == 'q':
@@ -75,30 +74,9 @@ class DPSController:
             return (False, 'Invalid command')
 
         # Execute
-        ret = execute[0](execute[1])
-
-        if ret:
-            return (True, 'Success')
-
-        return (True, 'Failure')
+        return execute[0](execute[1])
 
     # Private methods
-    def __handle_connect(self, cmd) -> bool:
-        """Handle connect command"""
-        if len(cmd.split()) > 1:
-            self.dps_state.port = cmd.split()[1]
-        self.connect()
-        return True
-
-    def __handle_set_port(self, port) -> bool:
-        """Handle set port"""
-        print(len(port))
-        if len(port) == 0:
-            return False
-
-        self.dps_state.port = port
-        return True
-
     def __validate_float(self, value) -> bool:
         """Check if string can be interpreted as float"""
         try:
@@ -115,37 +93,44 @@ class DPSController:
         except ValueError:
             return False
 
-    def __handle_set_volts(self, args) -> bool:
+    def __handle_connect(self, cmd) -> tuple[bool, str]:
+        """Handle connect command"""
+        if len(cmd.split()) > 1:
+            self.dps_state.port = cmd.split()[1]
+        return self.connect()
+
+    def __handle_set_port(self, port) -> tuple[bool, str]:
+        """Handle set port"""
+        if len(port) == 0:
+            return (False, 'Port argument is required')
+
+        self.dps_state.port = port
+        return (True, f'Port set to {port}')
+
+    def __handle_set_volts(self, args) -> tuple[bool, str]:
         """Function to handle set volts command"""
         if self.__validate_float(args):
-            ret = self.dps_engine.set_volts(float(args))
-            if not ret.code == DPSRetCode.DPS_OK:
-                return False
-            return True
+            ret: tuple[bool, str] = self.dps_engine.set_volts(float(args))
+            if not ret[0]:
+                return (False, 'Set volts failed')
+            return (True, 'Success')
 
-    def __handle_set_amps(self, args) -> bool:
+    def __handle_set_amps(self, args) -> tuple[bool, str]:
         """Function to handle set amps command"""
         if self.__validate_float(args):
-            ret = self.dps_engine.set_amps(float(args))
-            if not ret.code == DPSRetCode.DPS_OK:
-                return False
-            return True
+            ret: tuple[bool, str] = self.dps_engine.set_amps(float(args))
+            if not ret[0]:
+                return (False, 'Set amps failed')
+            return (True, 'Success')
 
     def __get_cmd_and_validate(self, cmd: str) -> tuple[Callable,str,bool]:
-        """Get command handler and validate args
-
-        Args:
-            cmd (str): Command string
-
-        Returns:
-            tuple[Callable,str,bool]: (handler, args, requires_connection)
-        """
+        """Get command handler and validate args"""
         main_cmd = cmd.split()[0].lower()
 
         # Get args if available
         args = str()
         if len(cmd.split()) > 1:
-            args = cmd.split()[1]
+            args: str = cmd.split()[1]
 
         if main_cmd == 'c':
             return (self.__handle_connect, args, False)
