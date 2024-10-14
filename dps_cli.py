@@ -26,6 +26,7 @@ class DPSCli:
             if cmd == 'q':
                 self.running = False
 
+
     def start(self) -> None:
         """Start CLI"""
         self.running = True

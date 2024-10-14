@@ -38,10 +38,10 @@ class DPSEngine:
     """Class interacting with DPS5005 through Modbus protocol"""
     def __init__(self, port: str, slave: int, debug : bool = False) -> None:
         """Constructor"""
-        self.port = port
+        self.port: str = port
         self.instrument = None
-        self.slave = slave
-        self.debug = debug
+        self.slave: int = slave
+        self.debug: bool = debug
 
     def connect(self) -> tuple[bool, str]:
         """Connect to DPS through modbus"""
@@ -114,10 +114,28 @@ class DPSEngine:
         power: int | float = self.__read_register(DPSRegister.PWR_OUT, 2)
         return (True, str(power))
 
-    def get_status(self) -> List[int]:
+    def get_status(self) -> tuple[bool, str]:
         """Get dump of status variables of DPS, 20 registers starting from 0x0"""
-        b: List[int] = self.__read_registers(0x0, 20)
-        return b
+        registers: List[int] = self.__read_registers(0x0, 20)
+        if len(registers) != 20:
+            return (False, 'Error reading DPS registers')
+
+        retstr = str()
+        retstr += f'U-Set:\t\t{registers[0] / 100.0}\n'
+        retstr += f'I-Set:\t\t{registers[1] / 1000.0}\n'
+        retstr += f'U-Out:\t\t{registers[2] / 100.0}\n'
+        retstr += f'I-Out:\t\t{registers[3] / 1000.0}\n'
+        retstr += f'P-Out:\t\t{registers[4] / 100.0}\n'
+        retstr += f'U-In:\t\t{registers[5] / 100.0}\n'
+        retstr += f'Locked:\t\t{registers[6]}\n'
+        retstr += f'Protected:\t{registers[7]}\n'
+        retstr += f'CV/CC:\t\t{registers[8]}\n'
+        retstr += f'ONOFF:\t\t{registers[9]}\n'
+        retstr += f'Backlight:\t\t{registers[10]}\n'
+        retstr += f'Model:\t\t{registers[11]}\n'
+        retstr += f'Firmware:\t{registers[12]}\n'
+
+        return (True, retstr)
 
     # Private methods
     # Communication through Modbus, catch exceptions on these, used internally by class
@@ -125,7 +143,6 @@ class DPSEngine:
     def __write_register(self, address: int, value: Union[int,float], num_decimals: int) -> None:
         """Write single register at at address"""
         self.instrument.write_register(address, value=value, number_of_decimals=num_decimals)
-        print('Write register')
 
     @exception_handler
     def __write_registers(self, address: int, values: List[int]) -> None:
@@ -144,29 +161,6 @@ class DPSEngine:
         registers: List[int] = self.instrument.read_registers(registeraddress=address,
                                                    number_of_registers=number)
         return registers
-
-    # Utilities
-    def get_status_string(self) -> Dict[str, float]:
-        """Get dictionary representation of status byte dump"""
-        b: List[int] = self.get_status()
-        if len(b) != 20:
-            print('Invalid status response from DPS device')
-            return
-        st =  { 'U-Set': b[0] / 100.0,
-                'I-Set': b[1] / 1000.0,
-                'U-Out': b[2] / 100.0,
-                'I-Out': b[3] / 1000.0,
-                'P-Out': b[4] / 100.0,
-                'U-In': b[5] / 100.0,
-                'Locked': {0: 'OFF', 1: 'ON'}.get(b[6]),
-                'Protected': {0: 'ON', 1: 'OFF'}.get(b[7]),
-                'CV/CC': {0: 'CV', 1: 'CC'}.get(b[8]),
-                'ON_OFF': {0: 'OFF', 1: 'ON'}.get(b[9]),
-                'Backlight': b[10],
-                'Model': str(b[11]),
-                'Firmware': str(b[12] / 10.0),
-        }
-        return st
 
 if __name__ == "__main__":
     print('DPSEngine is not meant to be run standalone')
