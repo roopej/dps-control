@@ -1,12 +1,8 @@
-
+"""DPS-Control GUI"""
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt, QFile, QTextStream
 from PySide6.QtGui import QFont, QPalette, QColor
-from enum import IntEnum
-
 import sys
-
-from PySide6.QtWidgets import QLabel
 import breeze_pyside6
 
 DEFAULT_FONT = 'Arial'
@@ -232,6 +228,24 @@ class DPSMainWindow(QMainWindow):
         layout.addLayout(self.__get_output_panel())
         return layout
 
+    def __get_log_layout(self) -> QHBoxLayout:
+        """This is the (usually) bottom part of the screen for log info"""
+        layout = QHBoxLayout()
+        log_pane = QPlainTextEdit()
+        log_pane.setReadOnly(True)
+        log_pane.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        layout.addWidget(log_pane)
+        return layout
+
+    def __get_cli_layout(self) -> QHBoxLayout:
+        """This is the hidable CLI interface on very bottom"""
+        layout = QHBoxLayout()
+
+        cliLabel: QLabel = get_label('CLI:', 12)
+        cli_input: QLineEdit = get_lineedit('', 14, 256, Qt.FocusPolicy.StrongFocus)
+        layout.addWidget(cliLabel)
+        layout.addWidget(cli_input)
+        return layout
 
     def setup(self) -> None:
         """Setup UI"""
@@ -241,8 +255,16 @@ class DPSMainWindow(QMainWindow):
         # Two horizontal boxes, one for headers, one for controls etc
         self.headerHLayout: QHBoxLayout = self.__get_header_panel()
         self.panelHLayout: QHBoxLayout = self.__get_panel_layout()
+        self.logHLayout: QHBoxLayout = self.__get_log_layout()
+        self.cliHLayout: QHBoxLayout = self.__get_cli_layout()
+
         self.mainVLayout.addLayout(self.headerHLayout)
         self.mainVLayout.addLayout(self.panelHLayout)
+        logLabel: QLabel = get_label('Log:', 12)
+        self.mainVLayout.addWidget(logLabel)
+        self.mainVLayout.addLayout(self.logHLayout)
+
+        self.mainVLayout.addLayout(self.cliHLayout)
 
         # Central widget
         self.centralWidget = QWidget()
