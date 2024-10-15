@@ -32,7 +32,10 @@ class DPSCli:
                 try:
                     while True:
                         event = self.controller.event_queue.get(block = True, timeout= None)
-                        print(f'Got event {event}')
+                        uout = event['U-Out']
+                        iout = event['I-Out']
+                        print(f'U-Out: \x1b[1;31m{uout:.2f}\x1b[0m V\tI-Out: \x1b[1;31m{iout:.3f}\x1b[0m A')
+                        print('\x1b[2F')
                 except KeyboardInterrupt:
                     self.controller.stop_events()
                     print('\n')

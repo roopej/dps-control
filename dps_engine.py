@@ -57,6 +57,7 @@ class DPSEngine:
         self.instrument.mode = minimalmodbus.MODE_RTU
         self.instrument.close_port_after_each_call = False
         self.instrument.debug = self.debug
+        self.set_power(False)
         return (True, '')
 
     # Getters and setters
