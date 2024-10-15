@@ -30,31 +30,39 @@ import dps_config as conf
 
 # Global flag for stopping producing events
 STOP_EVENTS: bool = False
+VERSION: str = '0.2'
 
 class DPSController:
     """Handles logic and parsing commands"""
 
     def __init__(self, events: SimpleQueue = None) -> None:
-        # Model, read some values from config
         self.dps_state: DPSState = DPSState()
+        self.event_queue: SimpleQueue = events
+        self.event_thread : threading.Thread = None
+        self.dps_engine: DPSEngine = None
+
+        # Model, read some values from config
         self.dps_state.port = conf.ttyPort
         self.dps_state.slave = conf.slave
         self.dps_state.min_amps = conf.min_current
         self.dps_state.max_amps = conf.max_current
         self.dps_state.min_volts = conf.min_voltage
         self.dps_state.max_volts = conf.max_voltage
-        self.event_queue: SimpleQueue = events
-        self.event_thread : threading.Thread = None
 
         # Instance to talk to DPS device through Modbus
         self.dps_engine = DPSEngine(self.dps_state.port, self.dps_state.slave, False)
+        self.version: str = VERSION
+
+    def get_version(self) -> str:
+        """Get version string"""
+        return self.version
 
     def connect(self) -> tuple[bool, str]:
         """Start controller, connect to device"""
         conn: tuple[bool, str] = self.dps_engine.connect()
         if not conn[0]:
             return False, "ERROR: Cannot connect to DPS device."
-        
+
         self.dps_state.connected = True
         return True, "Connection successful"
 
@@ -85,6 +93,7 @@ class DPSController:
 
     def start_events(self) -> None:
         """Start a thread providing events from DPS"""
+
         self.event_thread = threading.Thread(target=self.__event_provider, args=())
         self.event_thread.start()
 
@@ -138,8 +147,9 @@ class DPSController:
         """Handle connect command"""
         if self.dps_state.connected:
             return (False, 'Already connected')
-        if len(cmd.split()) > 1:
-            self.dps_state.port = cmd.split()[1]
+        if len(cmd):
+            self.dps_state.port = cmd
+            self.dps_engine.port = cmd
         return self.connect()
 
     def __handle_info(self, cmd) -> tuple[bool, str]:
