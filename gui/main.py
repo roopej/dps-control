@@ -84,7 +84,7 @@ class DPSMainWindow(QMainWindow):
         volt_layout = QHBoxLayout()
         self.volt_dial = QDial()
         self.volt_dial.setMinimumWidth(100)
-        self.volt_dial.notchesVisible = True
+        self.volt_dial.setNotchesVisible(True)
         self.volt_dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.volt_input: QLineEdit = get_lineedit('0.00', 18, 4, Qt.FocusPolicy.StrongFocus)
         self.volt_input.setMaximumWidth(100)
@@ -99,7 +99,7 @@ class DPSMainWindow(QMainWindow):
         amp_layout = QHBoxLayout()
         self.amp_dial = QDial()
         self.amp_dial.setMinimumWidth(100)
-        self.amp_dial.notchesVisible = True
+        self.amp_dial.setNotchesVisible(True)
         self.amp_dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.amp_input: QLineEdit = get_lineedit('0.000', 18, 5, Qt.FocusPolicy.StrongFocus)
         self.amp_input.setMaximumWidth(100)
