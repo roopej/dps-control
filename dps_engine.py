@@ -19,20 +19,20 @@ class DPSRegister(IntEnum):
     VOLTS_UIN = 0x5
     PWR_ONOFF = 0x9
 
-def exception_handler(func):
-    """Exception handle for decorator"""
-    def inner_function(*args, **kwargs):
-        try:
-            func(*args, **kwargs)
-        except ModbusException:
-            print(f"{func.__name__} ModbusException")
-        except SerialException:
-            print(f"{func.__name__} SerialException")
-        except TypeError:
-            print(f"{func.__name__} TypeError")
-        except ValueError:
-            print(f"{func.__name__} ValueError")
-    return inner_function
+# def exception_handler(func):
+#     """Exception handle for decorator"""
+#     def inner_function(*args, **kwargs):
+#         try:
+#             func(*args, **kwargs)
+#         except ModbusException:
+#             print(f"{func.__name__} ModbusException")
+#         except SerialException:
+#             print(f"{func.__name__} SerialException")
+#         except TypeError:
+#             print(f"{func.__name__} TypeError")
+#         except ValueError:
+#             print(f"{func.__name__} ValueError")
+#     return inner_function
 
 class DPSEngine:
     """Class interacting with DPS5005 through Modbus protocol"""
@@ -116,7 +116,8 @@ class DPSEngine:
 
     def get_printable_status(self) -> tuple[bool, str]:
         """Get dump of status variables of DPS, 20 registers starting from 0x0 as printable"""
-        registers: List[int] = self.__read_registers(0x0, 20)
+        registers = self.__read_registers(0x0, 20)
+
         if len(registers) != 20:
             return (False, 'Error reading DPS registers')
 
@@ -131,9 +132,9 @@ class DPSEngine:
         retstr += f'Protected:\t{registers[7]}\n'
         retstr += f'CV/CC:\t\t{registers[8]}\n'
         retstr += f'ONOFF:\t\t{registers[9]}\n'
-        retstr += f'Backlight:\t\t{registers[10]}\n'
+        retstr += f'Backlight:\t{registers[10]}\n'
         retstr += f'Model:\t\t{registers[11]}\n'
-        retstr += f'Firmware:\t{registers[12]}\n'
+        retstr += f'Firmware:\t{registers[12] / 10.0}\n'
         return (True, retstr)
 
     def get_status(self) -> dict[str, any]:
@@ -154,34 +155,30 @@ class DPSEngine:
             'ONOFF': registers[9],
             'Backlight': registers[10],
             'Model': registers[11],
-            'Firmware': registers[12],
+            'Firmware': registers[12] / 10.0,
         }
         return ret
 
     # Private methods
     # Communication through Modbus, catch exceptions on these, used internally by class
-    @exception_handler
     def __write_register(self, address: int, value: Union[int,float], num_decimals: int) -> None:
         """Write single register at at address"""
         self.instrument.write_register(address, value=value, number_of_decimals=num_decimals)
 
-    @exception_handler
     def __write_registers(self, address: int, values: List[int]) -> None:
         """Write list of registers into address"""
         self.instrument.write_registers(registeraddress=address, values=values)
 
-    @exception_handler
     def __read_register(self, address: int, num_decimals: int) -> Union[int, float]:
         """Read single register from address"""
         retval: int | float = self.instrument.read_register(address, num_decimals)
         return retval
 
-    @exception_handler
     def __read_registers(self, address: int, number: int) -> List[int]:
         """Read number of registers starting from address"""
-        registers: List[int] = self.instrument.read_registers(registeraddress=address,
+        regs : List[int] = self.instrument.read_registers(registeraddress=address,
                                                    number_of_registers=number)
-        return registers
+        return regs
 
 if __name__ == "__main__":
     print('DPSEngine is not meant to be run standalone')

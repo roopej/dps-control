@@ -47,13 +47,15 @@ class DPSController:
         self.event_thread : threading.Thread = None
 
         # Instance to talk to DPS device through Modbus
-        self.dps_engine = DPSEngine(self.dps_state.port, self.dps_state.slave)
+        self.dps_engine = DPSEngine(self.dps_state.port, self.dps_state.slave, True)
 
     def connect(self) -> tuple[bool, str]:
         """Start controller, connect to device"""
         conn: tuple[bool, str] = self.dps_engine.connect()
         if not conn[0]:
             return False, "ERROR: Cannot connect to DPS device."
+        
+        self.dps_state.connected = True
         return True, "Connection successful"
 
     def get_state(self) -> tuple[bool, str]:
