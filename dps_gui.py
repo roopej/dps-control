@@ -39,6 +39,17 @@ def get_button(text: str) -> QPushButton:
     btn.setStyleSheet(btnStyle)
     return btn
 
+def set_button_bg(btn: QPushButton, color: str, reset: bool = False) -> None:
+    """Set button background color or reset to default"""
+    color_to = color
+    if reset:
+        color_to = '#31363b'
+    btnStyle = (
+        'border-radius: 7;'
+        f'background-color: {color_to};'
+    )
+    btn.setStyleSheet(btnStyle)
+
 class QVLine(QFrame):
     def __init__(self) -> None:
         super(QVLine, self).__init__()
@@ -56,11 +67,12 @@ class QHLine(QFrame):
         self.setMidLineWidth(1)
 
 class DPSMainWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, controller: DPSController):
         super().__init__()
         self.setWindowTitle('DPS Controller')
         self.setMinimumSize(800, 600)
         self.log_pane = QPlainTextEdit()
+        self.controller = controller
 
     # Private UI setup methods
     def __get_setup_panel(self) -> QVBoxLayout:
@@ -91,7 +103,9 @@ class DPSMainWindow(QMainWindow):
         statusHBox.addWidget(status_line)
         statusHBox.addWidget(status_indicator)
 
-        self.connectButton: QPushButton = get_button('Connect')
+        self.button_connect: QPushButton = get_button('Connect')
+        self.button_connect.setObjectName('button_connect')
+        self.button_connect.clicked.connect(self, self.__handle_buttons)
 
         layout.addWidget(QHLine())
         layout.addWidget(self.portLabel)
@@ -103,7 +117,7 @@ class DPSMainWindow(QMainWindow):
         layout.addStretch()
         layout.addWidget(QHLine())
         layout.addLayout(statusHBox)
-        layout.addWidget(self.connectButton)
+        layout.addWidget(self.button_connect)
         return layout
 
     def __get_control_panel(self) -> QVBoxLayout:
@@ -139,9 +153,11 @@ class DPSMainWindow(QMainWindow):
         amp_layout.addWidget(self.amp_dial)
         amp_layout.addWidget(self.amp_input)
         amp_layout.addWidget(amp_unit_label)
-        self.setbutton: QPushButton = get_button('Set')
-        self.setbutton.setMaximumWidth(100)
-        self.setbutton.clicked.connect(self.__set_output_values)
+        self.button_set: QPushButton = get_button('Set')
+        self.button_set.setObjectName('button_set')
+        self.button_set.setMaximumWidth(100)
+        self.button_set.setEnabled(False)
+        self.button_set.clicked.connect(self.__handle_buttons)
 
         layout.addWidget(QHLine())
         layout.addWidget(volt_label)
@@ -149,7 +165,7 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(amp_label)
         layout.addLayout(amp_layout)
         layout.addWidget(QHLine())
-        layout.addWidget(self.setbutton)
+        layout.addWidget(self.button_set)
 
         return layout
 
@@ -213,6 +229,9 @@ class DPSMainWindow(QMainWindow):
         pout_hbox.addWidget(pout_unit_label)
 
         self.button_onoff: QPushButton = get_button('Power')
+        self.button_onoff.setObjectName('button_onoff')
+        self.button_onoff.setEnabled(False)
+        self.button_onoff.clicked.connect(self, self.__handle_buttons)
 
         # Pack stuff into layout
         layout.addWidget(QHLine())
@@ -281,11 +300,28 @@ class DPSMainWindow(QMainWindow):
         return layout
 
     # Private functional methods
-    def __set_output_values(self) -> None:
-        """Handle settings volts and amps from UI"""
-        cmd: str = f'va {self.volt_input.text()} {self.amp_input.text()}'
-        self.log(f'Set output: {self.volt_input.text()} V {self.amp_input.text()} A')
+    def __handle_buttons(self) -> None:
+        """Handle button presses from UI"""
+        cmd: str = str()
         self.log(cmd)
+        sender = self.sender()
+        sender_name = sender.objectName()
+        print(sender_name)
+        if sender_name == 'button_onoff':
+            cmd = 'x'
+            if self.controller.get_power_state() is False:
+                self.log('Switching power ON')
+                set_button_bg(sender, '#00cc00')
+            else:
+                self.log('Switching power OFF')
+                set_button_bg(sender, '', True)
+            # TODO: Send command here
+        elif sender_name == 'button_connect':
+            pass
+        elif sender_name == 'button_set':
+            cmd: str = f'va {self.volt_input.text()} {self.amp_input.text()}'
+            self.log(f'Set output: {self.volt_input.text()} V {self.amp_input.text()} A')
+            # TODO: Send command here
 
     # Public methods
     def setup(self) -> None:
@@ -326,11 +362,14 @@ def set_styles(app: QApplication) -> None:
 def launch_gui(controller: DPSController) -> None:
     app = QApplication(sys.argv)
     set_styles(app)
-    window = DPSMainWindow()
+    window = DPSMainWindow(controller)
     window.setup()
     window.show()
     window.log(f'dps-control v{controller.get_version()} starting...')
-    window.log('----------------------------------------------')
+    window.log('-------------------------------')
+
+    #print(window.palette().window().color().name())
+
     app.exec()
 
 if __name__ == '__main__':
