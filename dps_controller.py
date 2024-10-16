@@ -34,7 +34,6 @@ VERSION: str = '0.2'
 
 class DPSController:
     """Handles logic and parsing commands"""
-
     def __init__(self, events: SimpleQueue = None) -> None:
         self.dps_state: DPSState = DPSState()
         self.event_queue: SimpleQueue = events
@@ -53,9 +52,10 @@ class DPSController:
         self.dps_engine = DPSEngine(self.dps_state.port, self.dps_state.slave, False)
         self.version: str = VERSION
 
-    def get_version(self) -> str:
+    @staticmethod
+    def get_version() -> str:
         """Get version string"""
-        return self.version
+        return VERSION
 
     def connect(self) -> tuple[bool, str]:
         """Start controller, connect to device"""
