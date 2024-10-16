@@ -15,7 +15,7 @@ class StatusIndicator(QLabel):
         self.enabledColor: QColor = QColor(0x0, 0xbb, 0x0)
         self.disabledColor: QColor = QColor(0x44, 0x44, 0x44)
 
-    def enable(self, ena: bool):
+    def setEnabled(self, ena: bool) -> None:
         self.enabled = ena
 
     def paintEvent(self, event):
