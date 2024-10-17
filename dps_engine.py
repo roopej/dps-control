@@ -68,15 +68,13 @@ class DPSEngine:
         self.__write_register(DPSRegister.VOLTS_SET, volts, 2)
         return (True, '')
 
-    def get_volts_set(self) -> tuple[bool, int]:
+    def get_volts_set(self) -> tuple[bool, float]:
         """Get set value of volts out, not necessary the actual out voltage atm"""
-        return (True, self.get_registers().u_set)
+        return (True, self.get_registers().u_set / 100.0)
 
-    def get_volts_out(self) -> tuple[bool, int]:
+    def get_volts_out(self) -> tuple[bool, float]:
         """Get voltage output at the moment"""
-        # volts: int | float = self.__read_register(DPSRegister.VOLTS_OUT, 2)
-        # return (True, str(volts))
-        return (True, self.get_registers().u_out)
+        return (True, self.get_registers().u_out / 100.0)
 
     def set_amps(self, amps: float) -> tuple[bool, str]:
         """Set current of DPS device"""
@@ -84,23 +82,24 @@ class DPSEngine:
         self.__write_register(DPSRegister.AMPS_SET, amps, 3)
         return (True, '')
 
-    def get_amps_set(self) -> tuple[bool, int]:
+    def get_amps_set(self) -> tuple[bool, float]:
         """Get set value of amps out, not necessary the actual out current atm"""
-        # volts: int | float = self.__read_register(DPSRegister.AMPS_SET, 3)
-        # return (True, str(volts))
-        return (True, self.get_registers().i_set)
+        return (True, self.get_registers().i_set / 1000.0)
 
-    def get_amps_out(self) -> tuple[bool, int]:
+    def get_amps_out(self) -> tuple[bool, float]:
         """Get current output at the moment"""
-        # amps: int | float = self.__read_register(DPSRegister.AMPS_OUT, 3)
-        # return (True, str(amps))
-        return (True, self.get_registers().i_out)
+        return (True, self.get_registers().i_out / 1000.0)
 
-    def get_power_out(self) -> tuple[bool, int]:
+    def set_volts_and_amps(self, volts: float, amps: float) -> tuple[bool, str]:
+        """Set voltage and amps in single write"""
+        #TODO: Limit check
+        values: List[int] = [int(volts*100), int(amps*1000)]
+        self.__write_registers(DPSRegister.VOLTS_SET, values)
+        return (True, '')
+
+    def get_power_out(self) -> tuple[bool, float]:
         """Get current power output"""
-        # power: int | float = self.__read_register(DPSRegister.PWR_OUT, 2)
-        # return (True, str(power))
-        return (True, self.get_registers().p_out)
+        return (True, self.get_registers().p_out / 100.0)
 
     def get_printable_status(self) -> tuple[bool, str]:
         """Get dump of status variables of DPS"""
