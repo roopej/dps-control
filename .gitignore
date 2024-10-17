@@ -3,4 +3,5 @@ virtualenv
 venv
 .venv
 env
+.idea
 
