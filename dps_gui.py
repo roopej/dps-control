@@ -89,7 +89,7 @@ class DPSMainWindow(QMainWindow):
         va_dial_layout = QHBoxLayout()
         vcontrol = dialbar.DialBar('V')
         acontrol = dialbar.DialBar('A')
-        vcontrol.set_range(0.0, 15.0)
+        vcontrol.set_range(0.0, 3.0)
         acontrol.set_range(0,5)
         va_dial_layout.addWidget(vcontrol)
         va_dial_layout.addStretch()

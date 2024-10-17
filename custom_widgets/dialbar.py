@@ -14,7 +14,7 @@ class _Bar(QtWidgets.QWidget):
         return QtCore.QSize(30,120)
 
     def paintEvent(self, e):
-        meter_width = 30
+        meter_width = 35
 
         # Draw black meter bar, leave space for meter on right
         painter = QtGui.QPainter(self)
@@ -42,14 +42,30 @@ class _Bar(QtWidgets.QWidget):
         num_lines: int = int(vmax / 1000)
         line_space: float = d_height / num_lines
 
+        # Labels
+        pen = painter.pen()
+        pen.setColor(QtGui.QColor(235, 186, 52, 127))
+        painter.setPen(pen)
+
+        font = painter.font()
+        font.setFamily('Arial')
+        font.setPointSize(8)
+        painter.setFont(font)
+
+        step: int = int(num_lines / 10)
+        if step == 0:
+            step = 1
+
+        #painter.drawText(25, 25, "{}-->{}<--{}".format(vmin, value, vmax))
         print(f'Height: {d_height} Width: {d_width} PC:{pc}, bar_height: {bar_height}, min: {vmin}, max: {vmax}, line_space: {line_space}')
-        for n in range(0, num_lines+1, 1):
+        for n in range(0, num_lines+1, step):
             x1 = d_width - 30
-            y1 = d_height - int(n * line_space)
             x2 = d_width - 15
-            y2 = d_height - int(n * line_space)
-            print(f'{x1=} {y1=} {x2=} {y2=}')
-            painter.drawLine(d_width-30, d_height - int(n * line_space), d_width-15, d_height - int(n * line_space))
+            y = d_height - int(n * line_space)
+
+            #print(f'{x1=} {y1=} {x2=} {y2=}')
+            painter.drawLine(x1, y, x2, y)
+            painter.drawText(x2 + 2, y+8, f'{n:.1f}')
 
         # Draw bar
         rect = QtCore.QRect(5, d_height-bar_height, d_width-meter_width-padding, bar_height)
