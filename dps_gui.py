@@ -4,51 +4,12 @@ from PySide6.QtCore import Qt, QFile, QTextStream
 from PySide6.QtGui import QFont, QPalette, QColor
 import sys
 import breeze_pyside6
-from custom_widgets import *
+from custom_widgets import dialbar, statusindicator
 from dps_controller import DPSController
 import dps_config as conf
+from utils import get_button, get_label, get_lineedit
 
 DEFAULT_FONT = 'Arial'
-
-# Helper functions
-def default_font(size: int = 18) -> QFont:
-    font = QFont(DEFAULT_FONT)
-    font.setPointSize(size)
-    return font
-
-def get_label(text: str, size: int) -> QLabel:
-    label = QLabel(text)
-    label.setFont(default_font(size))
-    return label
-
-def get_lineedit(text: str, fontsize: int, maxlen: int = 128, focus: Qt.FocusPolicy = Qt.FocusPolicy.ClickFocus) -> QLineEdit:
-    edit = QLineEdit(text)
-    font: QFont = default_font(fontsize)
-    edit.setFont(font)
-    edit.setFocusPolicy(focus)
-    edit.setMaxLength(maxlen)
-    return edit
-
-def get_button(text: str) -> QPushButton:
-    # Ad-hoc style
-    btnStyle = (
-        "border-radius: 7;"
-    )
-    btn = QPushButton(text)
-    btn.setFont(default_font())
-    btn.setStyleSheet(btnStyle)
-    return btn
-
-def set_button_bg(btn: QPushButton, color: str, reset: bool = False) -> None:
-    """Set button background color or reset to default"""
-    color_to = color
-    if reset:
-        color_to = '#31363b'
-    btnStyle = (
-        'border-radius: 7;'
-        f'background-color: {color_to};'
-    )
-    btn.setStyleSheet(btnStyle)
 
 class QVLine(QFrame):
     def __init__(self) -> None:
@@ -124,40 +85,57 @@ class DPSMainWindow(QMainWindow):
         """Panel for setting volts and amps"""
         layout = QVBoxLayout()
 
-        # Volt section
-        volt_label: QLabel = get_label('Volts', 20)
-        volt_layout = QHBoxLayout()
-        self.volt_dial = QDial()
-        self.volt_dial.setMinimumWidth(100)
-        self.volt_dial.setNotchesVisible(True)
-        self.volt_dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.volt_input: QLineEdit = get_lineedit('0.00', 18, 4, Qt.FocusPolicy.StrongFocus)
-        self.volt_input.setMaximumWidth(100)
-        volt_unit_label: QLabel = get_label('V', 22)
+        va_dial_layout = QHBoxLayout()
+        #va_input_layout = QHBoxLayout()
 
-        volt_layout.addWidget(self.volt_dial)
-        volt_layout.addWidget(self.volt_input)
-        volt_layout.addWidget(volt_unit_label)
+        vcontrol = dialbar.DialBar()
+        acontrol = dialbar.DialBar()
+        va_dial_layout.addWidget(vcontrol)
+        va_dial_layout.addStretch()
+        va_dial_layout.addWidget(acontrol)
 
-        # Amp section
-        amp_label: QLabel = get_label('Amps', 20)
-        amp_layout = QHBoxLayout()
-        self.amp_dial = QDial()
-        self.amp_dial.setMinimumWidth(100)
-        self.amp_dial.setNotchesVisible(True)
-        self.amp_dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self.amp_input: QLineEdit = get_lineedit('0.000', 18, 5, Qt.FocusPolicy.StrongFocus)
-        self.amp_input.setMaximumWidth(100)
-        amp_unit_label: QLabel = get_label('A', 22)
 
-        amp_layout.addWidget(self.amp_dial)
-        amp_layout.addWidget(self.amp_input)
-        amp_layout.addWidget(amp_unit_label)
-        self.button_set: QPushButton = get_button('Set')
-        self.button_set.setObjectName('button_set')
-        self.button_set.setMaximumWidth(100)
-        self.button_set.setEnabled(False)
-        self.button_set.clicked.connect(self.__handle_buttons)
+        #va_input_layout.addWidget(self.volt_input)
+        #va_input_layout.addWidget(volt_unit_label)
+
+        # Vertical layout to return
+        layout.addLayout(va_dial_layout, 9)
+        #layout.addLayout(va_input_layout, 1)
+        return layout
+        # # Volt section
+        # volt_label: QLabel = get_label('Volts', 20)
+        # volt_layout = QHBoxLayout()
+        # self.volt_dial = QDial()
+        # self.volt_dial.setMinimumWidth(100)
+        # self.volt_dial.setNotchesVisible(True)
+        # self.volt_dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        # self.volt_input: QLineEdit = get_lineedit('0.00', 18, 4, Qt.FocusPolicy.StrongFocus)
+        # self.volt_input.setMaximumWidth(100)
+        # volt_unit_label: QLabel = get_label('V', 22)
+
+        # volt_layout.addWidget(self.volt_dial)
+        # volt_layout.addWidget(self.volt_input)
+        # volt_layout.addWidget(volt_unit_label)
+
+        # # Amp section
+        # amp_label: QLabel = get_label('Amps', 20)
+        # amp_layout = QHBoxLayout()
+        # self.amp_dial = QDial()
+        # self.amp_dial.setMinimumWidth(100)
+        # self.amp_dial.setNotchesVisible(True)
+        # self.amp_dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        # self.amp_input: QLineEdit = get_lineedit('0.000', 18, 5, Qt.FocusPolicy.StrongFocus)
+        # self.amp_input.setMaximumWidth(100)
+        # amp_unit_label: QLabel = get_label('A', 22)
+
+        # amp_layout.addWidget(self.amp_dial)
+        # amp_layout.addWidget(self.amp_input)
+        # amp_layout.addWidget(amp_unit_label)
+        # self.button_set: QPushButton = get_button('Set')
+        # self.button_set.setObjectName('button_set')
+        # self.button_set.setMaximumWidth(100)
+        # self.button_set.setEnabled(False)
+        # self.button_set.clicked.connect(self.__handle_buttons)
 
         layout.addWidget(QHLine())
         layout.addWidget(volt_label)
@@ -224,7 +202,7 @@ class DPSMainWindow(QMainWindow):
         pout_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
         pout_edit.setMaximumWidth(100)
         pout_unit_label: QLabel = get_label('W', label_size)
-        pout_unit_label.setMargin(7)
+        pout_unit_label.setMargin(3)
         pout_hbox.addWidget(pout_edit)
         pout_hbox.addWidget(pout_unit_label)
 
@@ -275,7 +253,7 @@ class DPSMainWindow(QMainWindow):
         layout.addLayout(self.__get_setup_panel())
         layout.addWidget(QVLine())
         layout.addLayout(self.__get_control_panel())
-        layout.addStretch()
+        #layout.addStretch()
         layout.addWidget(QVLine())
         layout.addLayout(self.__get_output_panel())
         return layout
@@ -364,6 +342,7 @@ def launch_gui(controller: DPSController) -> None:
     set_styles(app)
     window = DPSMainWindow(controller)
     window.setup()
+    window.setFixedSize(600, 700)
     window.show()
     window.log(f'dps-control v{controller.get_version()} starting...')
     window.log('-------------------------------')

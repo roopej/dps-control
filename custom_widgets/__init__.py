@@ -1,1 +1,1 @@
-__all__: list[str] = ['statusindicator']
+__all__: list[str] = ['statusindicator', 'dialbar']
