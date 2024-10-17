@@ -88,19 +88,24 @@ class DPSMainWindow(QMainWindow):
         va_dial_layout = QHBoxLayout()
         #va_input_layout = QHBoxLayout()
 
-        vcontrol = dialbar.DialBar()
-        acontrol = dialbar.DialBar()
+        vcontrol = dialbar.DialBar('V')
+        acontrol = dialbar.DialBar('A')
         va_dial_layout.addWidget(vcontrol)
         va_dial_layout.addStretch()
         va_dial_layout.addWidget(acontrol)
 
-
-        #va_input_layout.addWidget(self.volt_input)
-        #va_input_layout.addWidget(volt_unit_label)
+        self.button_set: QPushButton = get_button('Set')
+        self.button_set.setObjectName('button_set')
+        self.button_set.setMinimumWidth(150)
+        self.button_set.setEnabled(False)
+        self.button_set.clicked.connect(self.__handle_buttons)
 
         # Vertical layout to return
+        layout.addWidget(QHLine())
         layout.addLayout(va_dial_layout, 9)
-        #layout.addLayout(va_input_layout, 1)
+        layout.addStretch()
+        layout.addWidget(self.button_set, alignment=Qt.AlignmentFlag.AlignHCenter)
+
         return layout
         # # Volt section
         # volt_label: QLabel = get_label('Volts', 20)
@@ -137,15 +142,15 @@ class DPSMainWindow(QMainWindow):
         # self.button_set.setEnabled(False)
         # self.button_set.clicked.connect(self.__handle_buttons)
 
-        layout.addWidget(QHLine())
-        layout.addWidget(volt_label)
-        layout.addLayout(volt_layout)
-        layout.addWidget(amp_label)
-        layout.addLayout(amp_layout)
-        layout.addWidget(QHLine())
-        layout.addWidget(self.button_set)
+        # layout.addWidget(QHLine())
+        # layout.addWidget(volt_label)
+        # layout.addLayout(volt_layout)
+        # layout.addWidget(amp_label)
+        # layout.addLayout(amp_layout)
+        # layout.addWidget(QHLine())
+        # layout.addWidget(self.button_set)
 
-        return layout
+        # return layout
 
     def __get_output_panel(self) -> QVBoxLayout:
         """This is the rightmost vertical panel showing output values"""
