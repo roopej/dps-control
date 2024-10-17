@@ -20,21 +20,6 @@ class DPSRegister(IntEnum):
     VOLTS_UIN = 0x5
     PWR_ONOFF = 0x9
 
-# def exception_handler(func):
-#     """Exception handle for decorator"""
-#     def inner_function(*args, **kwargs):
-#         try:
-#             func(*args, **kwargs)
-#         except ModbusException:
-#             print(f"{func.__name__} ModbusException")
-#         except SerialException:
-#             print(f"{func.__name__} SerialException")
-#         except TypeError:
-#             print(f"{func.__name__} TypeError")
-#         except ValueError:
-#             print(f"{func.__name__} ValueError")
-#     return inner_function
-
 class DPSEngine:
     """Class interacting with DPS5005 through Modbus protocol"""
     def __init__(self, debug : bool = False) -> None:
@@ -66,15 +51,14 @@ class DPSEngine:
         self.__write_register(DPSRegister.PWR_ONOFF, int(enable), 0)
         return (True, '')
 
-    def get_power(self) -> tuple[bool, str]:
+    def get_power_status(self) -> tuple[bool, int]:
         """Get current power ON/OFF status"""
-        power: float = self.__read_register(DPSRegister.PWR_ONOFF, 0)
-        return (True, str(power))
+        return (True, self.get_registers().onoff)
 
     def toggle_power(self) -> tuple[bool, str]:
         """Toggle power ON<->OFF"""
-        current_status: tuple[bool, str] = self.get_power()
-        toggle: bool = current_status[1] == 'True'
+        current_status: tuple[bool, int] = self.get_power_status()
+        toggle: bool = bool(current_status[1])
         self.set_power(not toggle)
         return (True, '')
 
@@ -84,15 +68,15 @@ class DPSEngine:
         self.__write_register(DPSRegister.VOLTS_SET, volts, 2)
         return (True, '')
 
-    def get_volts_set(self) -> tuple[bool, str]:
+    def get_volts_set(self) -> tuple[bool, int]:
         """Get set value of volts out, not necessary the actual out voltage atm"""
-        volts: int | float = self.__read_register(DPSRegister.VOLTS_SET, 2)
-        return (True, str(volts))
+        return (True, self.get_registers().u_set)
 
-    def get_volts_out(self) -> tuple[bool, str]:
+    def get_volts_out(self) -> tuple[bool, int]:
         """Get voltage output at the moment"""
-        volts: int | float = self.__read_register(DPSRegister.VOLTS_OUT, 2)
-        return (True, str(volts))
+        # volts: int | float = self.__read_register(DPSRegister.VOLTS_OUT, 2)
+        # return (True, str(volts))
+        return (True, self.get_registers().u_out)
 
     def set_amps(self, amps: float) -> tuple[bool, str]:
         """Set current of DPS device"""
@@ -100,20 +84,23 @@ class DPSEngine:
         self.__write_register(DPSRegister.AMPS_SET, amps, 3)
         return (True, '')
 
-    def get_amps_set(self) -> tuple[bool, str]:
+    def get_amps_set(self) -> tuple[bool, int]:
         """Get set value of amps out, not necessary the actual out current atm"""
-        volts: int | float = self.__read_register(DPSRegister.AMPS_SET, 3)
-        return (True, str(volts))
+        # volts: int | float = self.__read_register(DPSRegister.AMPS_SET, 3)
+        # return (True, str(volts))
+        return (True, self.get_registers().i_set)
 
-    def get_amps_out(self) -> tuple[bool, str]:
+    def get_amps_out(self) -> tuple[bool, int]:
         """Get current output at the moment"""
-        amps: int | float = self.__read_register(DPSRegister.AMPS_OUT, 3)
-        return (True, str(amps))
+        # amps: int | float = self.__read_register(DPSRegister.AMPS_OUT, 3)
+        # return (True, str(amps))
+        return (True, self.get_registers().i_out)
 
-    def get_power_out(self) -> tuple[bool, str]:
+    def get_power_out(self) -> tuple[bool, int]:
         """Get current power output"""
-        power: int | float = self.__read_register(DPSRegister.PWR_OUT, 2)
-        return (True, str(power))
+        # power: int | float = self.__read_register(DPSRegister.PWR_OUT, 2)
+        # return (True, str(power))
+        return (True, self.get_registers().p_out)
 
     def get_printable_status(self) -> tuple[bool, str]:
         """Get dump of status variables of DPS"""
@@ -135,7 +122,7 @@ class DPSEngine:
         return (True, retstr)
 
     def get_registers(self) -> DPSRegisters:
-        """Get status registers from DPS device"""
+        """Get status registers from DPS device, updates self.registers to current values"""
         reglist: Lis[int] = self.__read_registers(0x0, 20)
         if len(registers != 20):
             return None

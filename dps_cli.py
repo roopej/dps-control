@@ -43,7 +43,7 @@ class DPSCli:
                 self.print_help()
                 continue
             elif cmd == 'l':
-                if not self.controller.dps_state.connected:
+                if not self.controller.status.connected:
                     print('You are not connected to the DPS device.')
                     continue
 
