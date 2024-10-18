@@ -21,6 +21,6 @@ def main():
         cli = DPSCli(controller)
         cli.start()
     else:
-        launch_gui()
+        launch_gui(controller)
 if __name__ == "__main__":
     main()

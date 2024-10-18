@@ -5,6 +5,8 @@ from PySide6.QtGui import QFont, QPalette, QColor
 import sys
 import breeze_pyside6
 from custom_widgets import *
+from dps_controller import DPSController
+import dps_config as conf
 
 DEFAULT_FONT = 'Arial'
 
@@ -37,8 +39,6 @@ def get_button(text: str) -> QPushButton:
     btn.setStyleSheet(btnStyle)
     return btn
 
-
-
 class QVLine(QFrame):
     def __init__(self) -> None:
         super(QVLine, self).__init__()
@@ -59,7 +59,10 @@ class DPSMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle('DPS Controller')
+        self.setMinimumSize(800, 600)
+        self.log_pane = None
 
+    # Private methods
     def __get_setup_panel(self) -> QVBoxLayout:
         """This is the leftmost panel containing setup items"""
         layout = QVBoxLayout()
@@ -67,12 +70,18 @@ class DPSMainWindow(QMainWindow):
         self.portLabel: QLabel = get_label('Port', fontsize)
         self.portEdit: QLineEdit = get_lineedit('', fontsize)
         self.portEdit.setMaximumWidth(140)
+        self.portEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.portEdit.setText(conf.ttyPort)
         self.baudLabel: QLabel = get_label('Baud rate', fontsize)
         self.baudEdit: QLineEdit = get_lineedit('', fontsize, 6)
         self.baudEdit.setMaximumWidth(140)
+        self.baudEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.baudEdit.setText('9600')
         self.slaveLabel:QLabel = get_label('Slave', fontsize)
         self.slaveEdit: QLineEdit = get_lineedit('', fontsize, 2)
         self.slaveEdit.setMaximumWidth(140)
+        self.slaveEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.slaveEdit.setText(str(conf.slave))
 
         statusHBox = QHBoxLayout()
         status_line = get_label('Connected', 12)
@@ -83,7 +92,6 @@ class DPSMainWindow(QMainWindow):
         statusHBox.addWidget(status_indicator)
 
         self.connectButton: QPushButton = get_button('Connect')
-
 
         layout.addWidget(QHLine())
         layout.addWidget(self.portLabel)
@@ -247,6 +255,7 @@ class DPSMainWindow(QMainWindow):
         layout.addLayout(self.__get_setup_panel())
         layout.addWidget(QVLine())
         layout.addLayout(self.__get_control_panel())
+        layout.addStretch()
         layout.addWidget(QVLine())
         layout.addLayout(self.__get_output_panel())
         return layout
@@ -254,14 +263,15 @@ class DPSMainWindow(QMainWindow):
     def __get_log_layout(self) -> QHBoxLayout:
         """This is the (usually) bottom part of the screen for log info"""
         layout = QHBoxLayout()
-        log_pane = QPlainTextEdit()
-        log_pane.setReadOnly(True)
-        log_pane.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        layout.addWidget(log_pane)
+        self.log_pane = QPlainTextEdit()
+        self.log_pane.setReadOnly(True)
+        self.log_pane.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        self.log_pane.setFont(DEFAULT_FONT)
+        layout.addWidget(self.log_pane)
         return layout
 
     def __get_cli_layout(self) -> QHBoxLayout:
-        """This is the hidable CLI interface on very bottom"""
+        """This is the CLI interface on very bottom"""
         layout = QHBoxLayout()
 
         cliLabel: QLabel = get_label('CLI:', 12)
@@ -270,6 +280,7 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(cli_input)
         return layout
 
+    # Public methods
     def setup(self) -> None:
         """Setup UI"""
         # Main vertical layout
@@ -294,6 +305,9 @@ class DPSMainWindow(QMainWindow):
         self.centralWidget.setLayout(self.mainVLayout)
         self.setCentralWidget(self.centralWidget)
 
+    def log(self, txt: str) -> None:
+        """Append log message to log panel"""
+        self.log_pane.appendPlainText(txt)
 
 def set_styles(app: QApplication) -> None:
     """Set style from breeze themes"""
@@ -302,12 +316,14 @@ def set_styles(app: QApplication) -> None:
     stream = QTextStream(file)
     app.setStyleSheet(stream.readAll())
 
-def launch_gui() -> None:
+def launch_gui(controller: DPSController) -> None:
     app = QApplication(sys.argv)
     set_styles(app)
     window = DPSMainWindow()
     window.setup()
     window.show()
+    window.log(f'dps-control v{controller.get_version()} starting...')
+    window.log('----------------------------------------------')
     app.exec()
 
 if __name__ == '__main__':
