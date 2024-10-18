@@ -6,7 +6,6 @@ import sys
 import breeze_pyside6
 from custom_widgets import dialbar, statusindicator, togglebutton
 from dps_controller import DPSController
-import dps_config as conf
 from toggle import ToggleButton
 from utils import button_factory, get_label, get_lineedit
 
@@ -45,17 +44,20 @@ class DPSMainWindow(QMainWindow):
         portEdit: QLineEdit = get_lineedit('', fontsize)
         portEdit.setMaximumWidth(140)
         portEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        portEdit.setText(conf.ttyPort)
+        portEdit.setText(self.controller.get_port())
+        portEdit.setEnabled(False)
         baudLabel: QLabel = get_label('Baud rate', fontsize)
         baudEdit: QLineEdit = get_lineedit('', fontsize, 6)
         baudEdit.setMaximumWidth(140)
         baudEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        baudEdit.setText('9600')
+        baudEdit.setText(self.controller.get_baudrate())
+        baudEdit.setEnabled(False)
         slaveLabel:QLabel = get_label('Slave', fontsize)
         slaveEdit: QLineEdit = get_lineedit('', fontsize, 2)
         slaveEdit.setMaximumWidth(140)
         slaveEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        slaveEdit.setText(str(conf.slave))
+        slaveEdit.setText(self.controller.get_slave())
+        slaveEdit.setEnabled(False)
 
         statusHBox = QHBoxLayout()
         status_line = get_label('Connected', 12)

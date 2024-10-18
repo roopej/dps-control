@@ -34,10 +34,11 @@ VERSION: str = '0.2'
 
 class DPSController:
     """Handles logic and parsing commands"""
-    def __init__(self, port: str, slave: int, events: SimpleQueue = None) -> None:
+    def __init__(self, port: str, slave: str, baudrate: str, events: SimpleQueue = None) -> None:
         self.status: DPSStatus = DPSStatus()
         self.status.port = port
-        self.status.slave = slave
+        self.status.slave = int(slave)
+        self.status.baudrate = int(baudrate)
         self.event_queue: SimpleQueue = events
         self.event_thread : threading.Thread = None
 
@@ -50,9 +51,21 @@ class DPSController:
         """Get version string"""
         return VERSION
 
+    def get_port(self) -> str:
+        """Get port as string"""
+        return self.status.port
+
+    def get_slave(self) -> str:
+        """Get slave number as string"""
+        return str(self.status.slave)
+
+    def get_baudrate(self) -> str:
+        """Get baud rate as string"""
+        return str(self.status.baudrate)
+
     def connect(self) -> tuple[bool, str]:
         """Start controller, connect to device"""
-        conn: tuple[bool, str] = self.engine.connect(self.status.port, self.status.slave)
+        conn: tuple[bool, str] = self.engine.connect(self.status.port, self.status.slave, self.status.baudrate)
         if not conn[0]:
             return False, "ERROR: Cannot connect to DPS device."
 
