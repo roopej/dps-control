@@ -8,6 +8,7 @@ import minimalmodbus
 from minimalmodbus import ModbusException
 from serial import SerialException
 from enum import IntEnum
+from dps_status import DPSRegisters
 
 class DPSRegister(IntEnum):
     """Register addresses of DPS5005"""
@@ -36,17 +37,16 @@ class DPSRegister(IntEnum):
 
 class DPSEngine:
     """Class interacting with DPS5005 through Modbus protocol"""
-    def __init__(self, port: str, slave: int, debug : bool = False) -> None:
+    def __init__(self, debug : bool = False) -> None:
         """Constructor"""
-        self.port: str = port
+        self.registers = DPSRegisters()
         self.instrument = None
-        self.slave: int = slave
         self.debug: bool = debug
 
-    def connect(self) -> tuple[bool, str]:
+    def connect(self, port: str, slave: int) -> tuple[bool, str]:
         """Connect to DPS through modbus"""
         try:
-            self.instrument = minimalmodbus.Instrument(port=self.port, slaveaddress=self.slave)
+            self.instrument = minimalmodbus.Instrument(port, slave)
         except SerialException as error:
             print(error)
             return (False, 'Serial exception')
@@ -116,49 +116,42 @@ class DPSEngine:
         return (True, str(power))
 
     def get_printable_status(self) -> tuple[bool, str]:
-        """Get dump of status variables of DPS, 20 registers starting from 0x0 as printable"""
-        registers = self.__read_registers(0x0, 20)
-
-        if len(registers) != 20:
-            return (False, 'Error reading DPS registers')
-
+        """Get dump of status variables of DPS"""
+        # TODO: Move to DPSStatus() __repr__ __str__?
         retstr = str()
-        retstr += f'U-Set:\t\t{registers[0] / 100.0}\n'
-        retstr += f'I-Set:\t\t{registers[1] / 1000.0}\n'
-        retstr += f'U-Out:\t\t{registers[2] / 100.0}\n'
-        retstr += f'I-Out:\t\t{registers[3] / 1000.0}\n'
-        retstr += f'P-Out:\t\t{registers[4] / 100.0}\n'
-        retstr += f'U-In:\t\t{registers[5] / 100.0}\n'
-        retstr += f'Locked:\t\t{registers[6]}\n'
-        retstr += f'Protected:\t{registers[7]}\n'
-        retstr += f'CV/CC:\t\t{registers[8]}\n'
-        retstr += f'ONOFF:\t\t{registers[9]}\n'
-        retstr += f'Backlight:\t{registers[10]}\n'
-        retstr += f'Model:\t\t{registers[11]}\n'
-        retstr += f'Firmware:\t{registers[12] / 10.0}\n'
+        retstr += f'U-Set:\t\t{self.registers[0] / 100.0}\n'
+        retstr += f'I-Set:\t\t{self.registers[1] / 1000.0}\n'
+        retstr += f'U-Out:\t\t{self.registers[2] / 100.0}\n'
+        retstr += f'I-Out:\t\t{self.registers[3] / 1000.0}\n'
+        retstr += f'P-Out:\t\t{self.registers[4] / 100.0}\n'
+        retstr += f'U-In:\t\t{self.registers[5] / 100.0}\n'
+        retstr += f'Locked:\t\t{self.registers[6]}\n'
+        retstr += f'Protected:\t{self.registers[7]}\n'
+        retstr += f'CV/CC:\t\t{self.registers[8]}\n'
+        retstr += f'ONOFF:\t\t{self.registers[9]}\n'
+        retstr += f'Backlight:\t{self.registers[10]}\n'
+        retstr += f'Model:\t\t{self.registers[11]}\n'
+        retstr += f'Firmware:\t{self.registers[12] / 10.0}\n'
         return (True, retstr)
 
-    def get_status(self) -> dict[str, any]:
-        """Get status as key-value pairs for event handling"""
-        registers: List[int] = self.__read_registers(0x0, 20)
-        if len(registers) != 20:
+    def get_registers(self) -> DPSRegisters:
+        """Get status registers from DPS device"""
+        reglist: Lis[int] = self.__read_registers(0x0, 20)
+        if len(registers != 20):
             return None
-        ret: dict[str, any] = {
-            'U-Set': registers[0] / 100.0,
-            'I-Set': registers[1] / 1000.0,
-            'U-Out': registers[2] / 100.0,
-            'I-Out': registers[3] / 1000.0,
-            'P-Out': registers[4] / 100.0,
-            'U-In': registers[5] / 100.0,
-            'Locked': registers[6],
-            'Protected': registers[7],
-            'CV/CC': registers[8],
-            'ONOFF': registers[9],
-            'Backlight': registers[10],
-            'Model': registers[11],
-            'Firmware': registers[12] / 10.0,
-        }
-        return ret
+        reg: DPSRegisters = self.registers
+        reg.u_set = reglist[0]
+        reg.i_set = reglist[1]
+        reg.u_out = reglist[2]
+        reg.i_out = reglist[3]
+        reg.p_out = reglist[4]
+        reg.u_in = reglist[5]
+        reg.lock = reglist[6]
+        reg.protect = reglist[7]
+        reg.cvcc = reglist[8]
+        reg.model = reglist[9]
+        reg.version = reglist[10]
+        return reg
 
     # Private methods
     # Communication through Modbus, catch exceptions on these, used internally by class
