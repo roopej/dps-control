@@ -81,24 +81,35 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(self.button_connect)
         return layout
 
+    def __controls_changed(self, *args) -> None:
+        """Handle signal from control UI element"""
+        self.button_set.setEnabled(True)
+
     def __get_control_panel(self) -> QVBoxLayout:
         """Panel for setting volts and amps"""
         layout = QVBoxLayout()
 
         # Dials for Volts and Amps
         va_dial_layout = QHBoxLayout()
-        vcontrol = dialbar.DialBar('V', 4)
-        acontrol = dialbar.DialBar('A', 5)
-        vcontrol.set_range(0.0, 3.0)
-        acontrol.set_range(0,5)
-        va_dial_layout.addWidget(vcontrol)
+        self.volt_control = dialbar.DialBar('V', 4)
+        self.volt_control.setObjectName('volt_control')
+        self.amp_control = dialbar.DialBar('A', 5)
+        self.amp_control.setObjectName('amp_control')
+        self.volt_control.set_range(0.0, 3.0)
+        self.amp_control.set_range(0,5)
+
+        # Connect change signals
+        self.volt_control.valuesChanged.connect(self.__controls_changed)
+        self.amp_control.valuesChanged.connect(self.__controls_changed)
+
+        # Add to layout
+        va_dial_layout.addWidget(self.volt_control)
         va_dial_layout.addStretch()
-        va_dial_layout.addWidget(acontrol)
+        va_dial_layout.addWidget(self.amp_control)
 
         # Button to commit values
         self.button_set: QPushButton = get_button('Set')
         self.button_set.setObjectName('button_set')
-        self.button_set.setMinimumWidth(150)
         self.button_set.setEnabled(False)
         self.button_set.clicked.connect(self.__handle_buttons)
 
@@ -109,7 +120,6 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(self.button_set, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         return layout
-
 
     def __get_output_panel(self) -> QVBoxLayout:
         """This is the rightmost vertical panel showing output values"""
@@ -125,66 +135,72 @@ class DPSMainWindow(QMainWindow):
             "}"
         )
 
-        label_size = 24
-        vin_label: QLabel = get_label('V-IN', label_size)
-        vin_hbox: QHBoxLayout = QHBoxLayout()
-        vin_edit: QLineEdit = get_lineedit('0.00', label_size, 4, Qt.FocusPolicy.NoFocus)
-        vin_edit.setStyleSheet(editstyle)
-        vin_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        vin_edit.setMaximumWidth(100)
-        vin_unit_label: QLabel = get_label('V', label_size)
-        vin_unit_label.setMargin(7)
-        vin_hbox.addWidget(vin_edit)
-        vin_hbox.addWidget(vin_unit_label)
+        label_size = 16
+        volt_in_label: QLabel = get_label('V-IN', label_size)
+        volt_in_hbox: QHBoxLayout = QHBoxLayout()
+        volt_in_edit: QLineEdit = get_lineedit('0.00', label_size, 4, Qt.FocusPolicy.NoFocus)
+        volt_in_edit.setStyleSheet(editstyle)
+        volt_in_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        volt_in_edit.setMaximumWidth(100)
+        volt_in_unit_label: QLabel = get_label('V', label_size)
+        volt_in_unit_label.setMargin(7)
+        volt_in_hbox.addWidget(volt_in_edit)
+        volt_in_hbox.addWidget(volt_in_unit_label)
 
-        vout_label: QLabel = get_label('V-OUT', label_size)
-        vout_hbox: QHBoxLayout = QHBoxLayout()
-        vout_edit: QLineEdit = get_lineedit('0.00', label_size, 4, Qt.FocusPolicy.NoFocus)
-        vout_edit.setStyleSheet(editstyle)
-        vout_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        vout_edit.setMaximumWidth(100)
-        vout_unit_label: QLabel = get_label('V', label_size)
-        vout_unit_label.setMargin(7)
-        vout_hbox.addWidget(vout_edit)
-        vout_hbox.addWidget(vout_unit_label)
+        volt_out_label: QLabel = get_label('V-OUT', label_size)
+        volt_out_hbox: QHBoxLayout = QHBoxLayout()
+        volt_out_edit: QLineEdit = get_lineedit('0.00', label_size, 4, Qt.FocusPolicy.NoFocus)
+        volt_out_edit.setStyleSheet(editstyle)
+        volt_out_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        volt_out_edit.setMaximumWidth(100)
+        volt_out_unit_label: QLabel = get_label('V', label_size)
+        volt_out_unit_label.setMargin(7)
+        volt_out_hbox.addWidget(volt_out_edit)
+        volt_out_hbox.addWidget(volt_out_unit_label)
 
-        aout_label: QLabel = get_label('A-OUT', label_size)
-        aout_hbox: QHBoxLayout = QHBoxLayout()
-        aout_edit: QLineEdit = get_lineedit('0.000', label_size, 5, Qt.FocusPolicy.NoFocus)
-        aout_edit.setStyleSheet(editstyle)
-        aout_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        aout_edit.setMaximumWidth(100)
-        aout_unit_label: QLabel = get_label('A', label_size)
-        aout_unit_label.setMargin(7)
-        aout_hbox.addWidget(aout_edit)
-        aout_hbox.addWidget(aout_unit_label)
+        amp_out_label: QLabel = get_label('A-OUT', label_size)
+        amp_out_hbox: QHBoxLayout = QHBoxLayout()
+        amp_out_edit: QLineEdit = get_lineedit('0.000', label_size, 5, Qt.FocusPolicy.NoFocus)
+        amp_out_edit.setStyleSheet(editstyle)
+        amp_out_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        amp_out_edit.setMaximumWidth(100)
+        amp_out_unit_label: QLabel = get_label('A', label_size)
+        amp_out_unit_label.setMargin(7)
+        amp_out_hbox.addWidget(amp_out_edit)
+        amp_out_hbox.addWidget(amp_out_unit_label)
 
-        pout_label: QLabel = get_label('P-OUT', label_size)
-        pout_hbox: QHBoxLayout = QHBoxLayout()
-        pout_edit: QLineEdit = get_lineedit('0.00', label_size, 4, Qt.FocusPolicy.NoFocus)
-        pout_edit.setStyleSheet(editstyle)
-        pout_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        pout_edit.setMaximumWidth(100)
-        pout_unit_label: QLabel = get_label('W', label_size)
-        pout_unit_label.setMargin(3)
-        pout_hbox.addWidget(pout_edit)
-        pout_hbox.addWidget(pout_unit_label)
+        power_out_label: QLabel = get_label('P-OUT', label_size)
+        power_out_hbox: QHBoxLayout = QHBoxLayout()
+        power_out_edit: QLineEdit = get_lineedit('0.00', label_size, 4, Qt.FocusPolicy.NoFocus)
+        power_out_edit.setStyleSheet(editstyle)
+        power_out_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        power_out_edit.setMaximumWidth(100)
+        power_out_unit_label: QLabel = get_label('W', label_size)
+        power_out_unit_label.setMargin(3)
+        power_out_hbox.addWidget(power_out_edit)
+        power_out_hbox.addWidget(power_out_unit_label)
 
         self.button_onoff: QPushButton = get_button('Power')
         self.button_onoff.setObjectName('button_onoff')
         self.button_onoff.setEnabled(False)
+
+        self.button_set.setSizePolicy(
+            QSizePolicy.MinimumExpanding,
+            QSizePolicy.Fixed
+        )
+        #self.button_set.setMinimumWidth(150)
         self.button_onoff.clicked.connect(self, self.__handle_buttons)
 
         # Pack stuff into layout
         layout.addWidget(QHLine())
-        layout.addWidget(vin_label)
-        layout.addLayout(vin_hbox)
-        layout.addWidget(vout_label)
-        layout.addLayout(vout_hbox)
-        layout.addWidget(aout_label)
-        layout.addLayout(aout_hbox)
-        layout.addWidget(pout_label)
-        layout.addLayout(pout_hbox)
+        layout.addWidget(volt_in_label)
+        layout.addLayout(volt_in_hbox)
+        layout.addWidget(volt_out_label)
+        layout.addLayout(volt_out_hbox)
+        layout.addWidget(amp_out_label)
+        layout.addLayout(amp_out_hbox)
+        layout.addWidget(power_out_label)
+        layout.addLayout(power_out_hbox)
         layout.addWidget(QHLine())
         layout.addWidget(self.button_onoff)
 
@@ -263,9 +279,12 @@ class DPSMainWindow(QMainWindow):
         elif sender_name == 'button_connect':
             pass
         elif sender_name == 'button_set':
-            cmd: str = f'va {self.volt_input.text()} {self.amp_input.text()}'
-            self.log(f'Set output: {self.volt_input.text()} V {self.amp_input.text()} A')
+            vstr = self.volt_control.get_value()
+            astr = self.amp_control.get_value()
+            cmd: str = f'va {vstr} {astr}'
+            self.log(f'Set output: {vstr} V {astr} A')
             # TODO: Send command here
+            sender.setEnabled(False)
 
     # Public methods
     def setup(self) -> None:
@@ -308,7 +327,7 @@ def launch_gui(controller: DPSController) -> None:
     set_styles(app)
     window = DPSMainWindow(controller)
     window.setup()
-    window.setFixedSize(600, 700)
+    window.setFixedSize(600, 650)
     window.show()
     window.log(f'dps-control v{controller.get_version()}\n')
 
