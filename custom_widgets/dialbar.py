@@ -74,7 +74,8 @@ class DialBar(QtWidgets.QWidget):
         layout = QtWidgets.QVBoxLayout()
         self._bar = _Bar()
         self._dial = QtWidgets.QDial()
-        self._dial.setNotchesVisible(False)
+        self._dial.setNotchesVisible(True)
+        self._dial.setNotchTarget(60)
         self._dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._dial.valueChanged.connect(self._value_changed)
 
@@ -112,10 +113,10 @@ class DialBar(QtWidgets.QWidget):
             return 0.0
         return val
 
-    def paintEvent(self, e) -> None:
-        painter = QtGui.QPainter(self)
-        brush = QtGui.QBrush()
-        brush.setColor(QtGui.QColor('black'))
-        brush.setStyle(Qt.BrushStyle.SolidPattern)
-        rect = QtCore.QRect(10, 0, painter.device().width()-20, painter.device().height()-150)
-        painter.fillRect(rect, brush)
+    # def paintEvent(self, e) -> None:
+    #     painter = QtGui.QPainter(self)
+    #     brush = QtGui.QBrush()
+    #     brush.setColor(QtGui.QColor('black'))
+    #     brush.setStyle(Qt.BrushStyle.SolidPattern)
+    #     rect = QtCore.QRect(10, 0, painter.device().width()-20, painter.device().height()-150)
+    #     painter.fillRect(rect, brush)
