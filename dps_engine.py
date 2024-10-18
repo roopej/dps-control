@@ -44,17 +44,21 @@ class DPSEngine:
         self.slave = slave
         self.debug = debug
 
-    @exception_handler
-    def connect(self):
+    def connect(self) -> bool:
         """Connect to DPS through modbus"""
-        self.instrument = minimalmodbus.Instrument(port=self.port, slaveaddress=self.slave)
+        try:
+            self.instrument = minimalmodbus.Instrument(port=self.port, slaveaddress=self.slave)
+        except SerialException as error:
+            print(error)
+            return False
+
         self.instrument.serial.baudrate = 9600
         self.instrument.serial.bytesize = 8
         self.instrument.serial.timeout = 0.5
         self.instrument.mode = minimalmodbus.MODE_RTU
         self.instrument.close_port_after_each_call = False
         self.instrument.debug = self.debug
-        print('Connect to DPS')
+        return True
 
     # Getters and setters
     def set_power(self, enable: bool) -> None:
@@ -122,7 +126,7 @@ class DPSEngine:
     def write_registers(self, address: int, values: List[int]) -> None:
         """Write list of registers into address"""
         self.instrument.write_registers(registeraddress=address, values=values)
-    
+
     @exception_handler
     def read_register(self, address: int, num_decimals: int) -> Union[int, float]:
         """Read single register from address"""
