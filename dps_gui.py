@@ -4,10 +4,11 @@ from PySide6.QtCore import Qt, QFile, QTextStream
 from PySide6.QtGui import QFont, QPalette, QColor
 import sys
 import breeze_pyside6
-from custom_widgets import dialbar, statusindicator
+from custom_widgets import dialbar, statusindicator, togglebutton
 from dps_controller import DPSController
 import dps_config as conf
-from utils import get_button, get_label, get_lineedit
+from toggle import ToggleButton
+from utils import button_factory, get_label, get_lineedit
 
 DEFAULT_FONT = 'Arial'
 
@@ -64,7 +65,7 @@ class DPSMainWindow(QMainWindow):
         statusHBox.addWidget(status_line)
         statusHBox.addWidget(status_indicator)
 
-        self.button_connect: QPushButton = get_button('Connect')
+        self.button_connect: QPushButton = button_factory('Connect')
         self.button_connect.setObjectName('button_connect')
         self.button_connect.clicked.connect(self, self.__handle_buttons)
 
@@ -108,7 +109,7 @@ class DPSMainWindow(QMainWindow):
         va_dial_layout.addWidget(self.amp_control)
 
         # Button to commit values
-        self.button_set: QPushButton = get_button('Set')
+        self.button_set: QPushButton = button_factory('Set')
         self.button_set.setObjectName('button_set')
         self.button_set.setEnabled(False)
         self.button_set.clicked.connect(self.__handle_buttons)
@@ -136,18 +137,8 @@ class DPSMainWindow(QMainWindow):
         )
 
         label_size = 16
-        volt_in_label: QLabel = get_label('V-IN', label_size)
-        volt_in_hbox: QHBoxLayout = QHBoxLayout()
-        volt_in_edit: QLineEdit = get_lineedit('0.00', label_size, 4, Qt.FocusPolicy.NoFocus)
-        volt_in_edit.setStyleSheet(editstyle)
-        volt_in_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        volt_in_edit.setMaximumWidth(100)
-        volt_in_unit_label: QLabel = get_label('V', label_size)
-        volt_in_unit_label.setMargin(7)
-        volt_in_hbox.addWidget(volt_in_edit)
-        volt_in_hbox.addWidget(volt_in_unit_label)
 
-        volt_out_label: QLabel = get_label('V-OUT', label_size)
+        volt_out_label: QLabel = get_label('Volts', label_size)
         volt_out_hbox: QHBoxLayout = QHBoxLayout()
         volt_out_edit: QLineEdit = get_lineedit('0.00', label_size, 4, Qt.FocusPolicy.NoFocus)
         volt_out_edit.setStyleSheet(editstyle)
@@ -158,7 +149,7 @@ class DPSMainWindow(QMainWindow):
         volt_out_hbox.addWidget(volt_out_edit)
         volt_out_hbox.addWidget(volt_out_unit_label)
 
-        amp_out_label: QLabel = get_label('A-OUT', label_size)
+        amp_out_label: QLabel = get_label('Amps', label_size)
         amp_out_hbox: QHBoxLayout = QHBoxLayout()
         amp_out_edit: QLineEdit = get_lineedit('0.000', label_size, 5, Qt.FocusPolicy.NoFocus)
         amp_out_edit.setStyleSheet(editstyle)
@@ -169,7 +160,7 @@ class DPSMainWindow(QMainWindow):
         amp_out_hbox.addWidget(amp_out_edit)
         amp_out_hbox.addWidget(amp_out_unit_label)
 
-        power_out_label: QLabel = get_label('P-OUT', label_size)
+        power_out_label: QLabel = get_label('Power', label_size)
         power_out_hbox: QHBoxLayout = QHBoxLayout()
         power_out_edit: QLineEdit = get_lineedit('0.00', label_size, 4, Qt.FocusPolicy.NoFocus)
         power_out_edit.setStyleSheet(editstyle)
@@ -180,9 +171,21 @@ class DPSMainWindow(QMainWindow):
         power_out_hbox.addWidget(power_out_edit)
         power_out_hbox.addWidget(power_out_unit_label)
 
-        self.button_onoff: QPushButton = get_button('Power')
+        volt_in_label: QLabel = get_label('V Input', label_size-4)
+        volt_in_hbox: QHBoxLayout = QHBoxLayout()
+        volt_in_edit: QLineEdit = get_lineedit('0.00', label_size, 4, Qt.FocusPolicy.NoFocus)
+        volt_in_edit.setStyleSheet(editstyle)
+        volt_in_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        volt_in_edit.setMaximumWidth(100)
+        volt_in_unit_label: QLabel = get_label('V', label_size)
+        volt_in_unit_label.setMargin(7)
+        volt_in_hbox.addWidget(volt_in_edit)
+        volt_in_hbox.addWidget(volt_in_unit_label)
+
+        self.button_onoff = button_factory('Power', toggle=True)
+        self.button_onoff.setCheckable(True)
         self.button_onoff.setObjectName('button_onoff')
-        self.button_onoff.setEnabled(False)
+        self.button_onoff.setEnabled(True)
 
         self.button_set.setSizePolicy(
             QSizePolicy.MinimumExpanding,
@@ -193,17 +196,16 @@ class DPSMainWindow(QMainWindow):
 
         # Pack stuff into layout
         layout.addWidget(QHLine())
-        layout.addWidget(volt_in_label)
-        layout.addLayout(volt_in_hbox)
         layout.addWidget(volt_out_label)
         layout.addLayout(volt_out_hbox)
         layout.addWidget(amp_out_label)
         layout.addLayout(amp_out_hbox)
         layout.addWidget(power_out_label)
         layout.addLayout(power_out_hbox)
-        layout.addWidget(QHLine())
+        layout.addWidget(volt_in_label)
+        layout.addLayout(volt_in_hbox)
+        #layout.addWidget(QHLine())
         layout.addWidget(self.button_onoff)
-
 
         return layout
 
@@ -271,13 +273,15 @@ class DPSMainWindow(QMainWindow):
             cmd = 'x'
             if self.controller.get_power_state() is False:
                 self.log('Switching power ON')
-                set_button_bg(sender, '#00cc00')
             else:
                 self.log('Switching power OFF')
-                set_button_bg(sender, '', True)
-            # TODO: Send command here
+            # TODO:
+            #  * Warn about initial settings?
+            #  * Send command here
+            #  * Check that power is actually on
+            #  * Set toggle button status accordingly
         elif sender_name == 'button_connect':
-            pass
+            self.log('Connecting')
         elif sender_name == 'button_set':
             vstr = self.volt_control.get_value()
             astr = self.amp_control.get_value()
@@ -290,26 +294,26 @@ class DPSMainWindow(QMainWindow):
     def setup(self) -> None:
         """Setup UI"""
         # Main vertical layout
-        self.mainVLayout = QVBoxLayout()
+        mainVLayout = QVBoxLayout()
 
         # Two horizontal boxes, one for headers, one for controls etc
-        self.headerHLayout: QHBoxLayout = self.__get_header_panel()
-        self.panelHLayout: QHBoxLayout = self.__get_panel_layout()
-        self.logHLayout: QHBoxLayout = self.__get_log_layout()
-        self.cliHLayout: QHBoxLayout = self.__get_cli_layout()
+        headerHLayout: QHBoxLayout = self.__get_header_panel()
+        panelHLayout: QHBoxLayout = self.__get_panel_layout()
+        logHLayout: QHBoxLayout = self.__get_log_layout()
+        cliHLayout: QHBoxLayout = self.__get_cli_layout()
 
-        self.mainVLayout.addLayout(self.headerHLayout)
-        self.mainVLayout.addLayout(self.panelHLayout)
+        mainVLayout.addLayout(headerHLayout, 1)
+        mainVLayout.addLayout(panelHLayout, 5)
         logLabel: QLabel = get_label('Log:', 12)
-        self.mainVLayout.addWidget(logLabel)
-        self.mainVLayout.addLayout(self.logHLayout)
+        mainVLayout.addWidget(logLabel)
+        mainVLayout.addLayout(logHLayout, 3)
 
-        self.mainVLayout.addLayout(self.cliHLayout)
+        mainVLayout.addLayout(cliHLayout, 1)
 
         # Central widget
-        self.centralWidget = QWidget()
-        self.centralWidget.setLayout(self.mainVLayout)
-        self.setCentralWidget(self.centralWidget)
+        centralWidget = QWidget()
+        centralWidget.setLayout(mainVLayout)
+        self.setCentralWidget(centralWidget)
 
     def log(self, txt: str) -> None:
         """Append log message to log panel"""
@@ -327,9 +331,9 @@ def launch_gui(controller: DPSController) -> None:
     set_styles(app)
     window = DPSMainWindow(controller)
     window.setup()
-    window.setFixedSize(600, 650)
+    window.setFixedSize(600, 750)
     window.show()
-    window.log(f'dps-control v{controller.get_version()}\n')
+    window.log(f'dps-control v{controller.get_version()}')
 
     #print(window.palette().window().color().name())
 
