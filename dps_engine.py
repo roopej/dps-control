@@ -62,7 +62,7 @@ class DPSEngine:
 
     # Getters and setters
     def set_power(self, enable: bool) -> tuple[bool, str]:
-        """Switch power output ON/OFF"""
+        """Set current power ON/OFF status"""
         self.__write_register(DPSRegister.PWR_ONOFF, int(enable), 0)
         return (True, '')
 
