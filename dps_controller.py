@@ -66,7 +66,7 @@ class DPSController:
 
         # If command requires connection and we are not connected
         if bool(execute[2]) and not self.dps_state.connected:
-            return (False, 'You are not connected.')
+            return (False, 'This command requires connection to DPS device')
 
         # If no callback was parsed
         if execute[0] is None:
@@ -99,7 +99,20 @@ class DPSController:
         return self.connect()
 
     def __handle_info(self, cmd) -> tuple[bool, str]:
+        """Handle info command"""
         return self.dps_engine.get_status
+
+    def __handle_power_switch(self, pwr) -> tuple[bool, str]:
+        """Handle power on/off and toggle commands, toggle if specific argument"""
+        switchto: bool = False
+        if len(pwr) == 0:
+            switchto = not self.dps_state.onoff
+        else:
+            switchto = bool(pwr)
+
+        self.dps_engine.set_power(switchto)
+        self.dps_state.onoff = switchto
+
 
     def __handle_set_port(self, port) -> tuple[bool, str]:
         """Handle set port"""
@@ -134,6 +147,7 @@ class DPSController:
         if len(cmd.split()) > 1:
             args: str = cmd.split()[1]
 
+        # Commands to handle (handler, arguments, connection_required)
         if main_cmd == 'c':
             return (self.__handle_connect, args, False)
         elif main_cmd == 'p':
@@ -144,5 +158,7 @@ class DPSController:
             return (self.__handle_set_amps, args, True)
         elif main_cmd == 'i':
             return (self.__handle_info, args, True)
+        elif main_cmd == 'x':
+            return (self.__handle_power_switch, args, True)
         else:
             return (None, '', False)
