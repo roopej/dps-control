@@ -16,6 +16,7 @@ VERSION = "0.1"
 # Global Modbus handle
 INSTRUMENT = None
 PORT = conf.ttyDevice
+PWRON = False
 
 # In case of problems, set to True to see better debug prints
 DEBUG = False
@@ -32,6 +33,9 @@ class Register(IntEnum):
     VOLTS_OUT = 0x2
     AMPS_OUT = 0x3
     PWR_OUT = 0x4
+    VOLTS_UIN = 0x5
+    PWR_ONOFF = 0x9
+
 
 def decode_modbus_status_response(b):
     """Decode Modbus response and return printable structure"""
@@ -58,11 +62,11 @@ def decode_modbus_status_response(b):
 
 def decode_modbus_monitor_response(b):
     """Decode Modbus response for live monitoring output"""
-    if len(b) != 6:
+    if len(b) != 8:
         print('Invalid Modbus response')
         return
 
-    ret_str = 'V: %s\tA: %s\tP: %s' % (b[0] / 100.0, b[1] / 1000.0, b[2] / 100.0)
+    ret_str = '\t%s V     %s A     %s W     %s Vin' % (round(b[0] / 100.0, 2), round(b[1] / 1000.0, 3), round(b[2] / 100.0,2), round(b[3] / 100.0, 2))
     return ret_str
 
 
@@ -79,6 +83,12 @@ def set_current(amps):
         print('Current must be between %d and %d' % (conf.min_current, conf.max_current))
         return
     INSTRUMENT.write_register(Register.AMPS_SET, value=amps, number_of_decimals=3)
+
+def toggle_power():
+    """Toggle output power ON and OFF"""
+    global PWRON
+    PWRON = not PWRON
+    INSTRUMENT.write_register(Register.PWR_ONOFF, value=PWRON, number_of_decimals=0)
 
 def read_registers(address, number):
     """Read registers of DPS device from address (number bytes)"""
@@ -110,6 +120,7 @@ def print_help():
     print('Available commands:')
     print('\ta <value>\tSet current to value (float)')
     print('\tv <value>\tSet voltage to value (float)')
+    print('\tx\t\tToggle output power ON/OFF. Set to OFF on startup for safety reasons.')
     print('\tp <port>\tSet device port to <port> eg. /dev/ttyUSB0')
     print('\tl\t\tLive monitoring mode, exit with [CTRL-C]')
     print('\th\t\tPrint this text')
@@ -157,15 +168,16 @@ def parse_command(cmd):
             initialize()
         elif main_cmd == 'l':
             print('Running live monitoring, press [CTRL-C] to stop...')
-
             try:
                 index = 1
                 while True:
-                    print(decode_modbus_monitor_response(read_registers(0x02, 6)))
+                    print(decode_modbus_monitor_response(read_registers(0x02, 8)))
                     print('\x1b[2F')
-                    time.sleep(1)
+                    time.sleep(0.5)
             except KeyboardInterrupt:
                 print('\n')
+        elif main_cmd == 'x':
+            toggle_power()
         elif main_cmd == 'h':
             print_help()
         elif main_cmd == 'q':
@@ -187,6 +199,7 @@ def initialize():
         INSTRUMENT.serial.timeout = 0.5
         INSTRUMENT.mode = minimalmodbus.MODE_RTU
         INSTRUMENT.close_port_after_each_call = False
+        INSTRUMENT.write_register(Register.PWR_ONOFF, value=0, number_of_decimals=0)
 
         print(INSTRUMENT)
     except (TypeError, ValueError, ModbusException, SerialException) as error:
