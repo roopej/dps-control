@@ -54,14 +54,5 @@ class DPSState:
             ret += f"{key}: {st[key]}\n"
         return ret
 
-    def get_portinfo(self) -> dict:
-        """Get basic info about port settings"""
-        portinfo = {
-            "connected": self.connected,
-            "port": self.port,
-            "slave": self.slave
-        }
-        return portinfo
-
 if __name__ == "__main__":
     print("DPSState is a POD, not to be run")
