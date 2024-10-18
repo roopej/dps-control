@@ -6,7 +6,7 @@ import sys
 import breeze_pyside6
 from custom_widgets import dialbar, statusindicator, togglebutton
 from dps_controller import DPSController
-from toggle import ToggleButton
+from custom_widgets.togglebutton import ToggleButton
 from utils import button_factory, get_label, get_lineedit
 
 DEFAULT_FONT = 'Arial'

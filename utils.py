@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import QLineEdit, QPushButton, QLabel
 from PySide6.QtGui import QFont, QPalette, QColor
 from PySide6.QtCore import Qt
-from toggle import ToggleButton
+from custom_widgets.togglebutton import ToggleButton
 from custom_widgets.togglebutton import ToggleButton
 
 DEFAULT_FONT = 'Arial'
