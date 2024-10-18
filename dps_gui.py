@@ -335,7 +335,7 @@ def set_styles(app: QApplication) -> None:
     stream = QTextStream(file)
     app.setStyleSheet(stream.readAll())
 
-def launch_gui(controller: DPSController) -> None:
+def DPSGui(controller: DPSController) -> None:
     app = QApplication(sys.argv)
     set_styles(app)
     window = DPSMainWindow(controller)
@@ -343,10 +343,7 @@ def launch_gui(controller: DPSController) -> None:
     window.setFixedSize(600, 750)
     window.show()
     window.log(f'dps-control v{controller.get_version()}')
-
-    #print(window.palette().window().color().name())
-
     app.exec()
 
 if __name__ == '__main__':
-    launch_gui()
+    DPSGui()
