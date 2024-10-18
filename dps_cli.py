@@ -11,6 +11,19 @@ class DPSCli:
         self.controller: DPSController = controller
         self.running: bool = False
 
+    def print_help(self) -> None:
+        """Print generic help for commands available"""
+        print(f'dps-control v{self.controller.get_version()}')
+        print('-----------------------------------------------------------')
+        print('Available commands:')
+        print('\ta <value>\tSet current to value (float)')
+        print('\tv <value>\tSet voltage to value (float)')
+        print('\tx\t\tToggle output power ON/OFF. Set to OFF on startup for safety reasons.')
+        print('\tp <port>\tSet device port to <port> eg. /dev/ttyUSB0')
+        print('\tl\t\tLive monitoring mode, exit with [CTRL-C]')
+        print('\th\t\tPrint this text')
+        print('\tq\t\tQuit program')
+
     def command_prompt(self) -> str:
         """Get input from user and return command"""
         command: str = input('DPS> ')
@@ -26,7 +39,14 @@ class DPSCli:
 
             if cmd == 'q':
                 self.running = False
+            elif cmd == 'h':
+                self.print_help()
+                continue
             elif cmd == 'l':
+                if not self.controller.dps_state.connected:
+                    print('You are not connected to the DPS device.')
+                    continue
+
                 print('Running live monitoring, press [CTRL-C] to stop...')
                 self.controller.start_events()
                 try:
@@ -47,6 +67,7 @@ class DPSCli:
     def start(self) -> None:
         """Start CLI"""
         self.running = True
+        print(f'dps-control v{self.controller.get_version()}\n')
         print(self.controller.get_portinfo()[1])
         self.command_loop()
 
