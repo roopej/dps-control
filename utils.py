@@ -43,3 +43,20 @@ def set_button_bg(btn: QPushButton, color: str, reset: bool = False) -> None:
         f'background-color: {color_to};'
     )
     btn.setStyleSheet(btnStyle)
+
+# Simple value validators
+def validate_float(value: str) -> bool:
+    """Check if string can be interpreted as float"""
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+def validate_int(value: str) -> bool:
+    """Check if string can be interpreted as int"""
+    try:
+        int(value)
+        return True
+    except ValueError:
+        return False

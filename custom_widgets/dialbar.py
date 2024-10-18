@@ -1,6 +1,7 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import Qt
-from utils import get_button, get_label, get_lineedit
+from utils import get_button, get_label, get_lineedit, validate_float
+
 
 class _Bar(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs) -> None:
@@ -54,6 +55,8 @@ class _Bar(QtWidgets.QWidget):
         # Define our canvas.
         d_height = painter.device().height() - (padding * 2)
         d_width = painter.device().width() - (padding * 2)
+
+        # Current value as percentage 0.0 - 1.0
         pc = (value - vmin) / (vmax - vmin)
         bar_height = pc * d_height
 
@@ -66,23 +69,23 @@ class _Bar(QtWidgets.QWidget):
         pen.setColor(QtGui.QColor(235, 186, 52, 127))
         painter.setPen(pen)
 
+        # Set font for meter
         font = painter.font()
         font.setFamily('Arial')
         font.setPointSize(8)
         painter.setFont(font)
 
+        # Limit number of meter lines in case there are many
         step: int = int(num_lines / 10)
         if step == 0:
             step = 1
 
-        #painter.drawText(25, 25, "{}-->{}<--{}".format(vmin, value, vmax))
-        print(f'Height: {d_height} Width: {d_width} PC:{pc}, bar_height: {bar_height}, min: {vmin}, max: {vmax}, line_space: {line_space}')
+        # Draw meter lines and texts
         for n in range(0, num_lines+1, step):
             x1 = d_width - 30
             x2 = d_width - 15
             y = d_height - int(n * line_space)
 
-            #print(f'{x1=} {y1=} {x2=} {y2=}')
             painter.drawLine(x1, y, x2, y)
             painter.drawText(x2 + 2, y+8, f'{n:.1f}')
 
@@ -108,13 +111,14 @@ class DialBar(QtWidgets.QWidget):
         self._dial.setNotchesVisible(True)
         self._dial.setNotchTarget(60)
         self._dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        self._dial.valueChanged.connect(self._value_changed)
+        self._dial.valueChanged.connect(self._dial_value_changed)
 
         # Display part
         bottom_layout = QtWidgets.QHBoxLayout()
         self._input: QtWidgets.QLineEdit = get_lineedit('0.00', 18, maxlen, Qt.FocusPolicy.StrongFocus)
         self._input.setMaximumWidth(100)
         self._input.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self._input.editingFinished.connect(self._input_value_changed)
         volt_unit_label: QtWidgets.QLabel = get_label(unit, 22)
         bottom_layout.addWidget(self._input)
         bottom_layout.addWidget(volt_unit_label)
@@ -124,9 +128,18 @@ class DialBar(QtWidgets.QWidget):
         layout.addLayout(bottom_layout)
         self.setLayout(layout)
 
-    def _value_changed(self):
+    def _dial_value_changed(self) -> None:
         """Handle dial value change event"""
         self._input.setText(str(self._dial.value()/1000))
+        self._bar.update()
+
+    def _input_value_changed(self) -> None:
+        """Handle input field change event"""
+        valstr: str = self._input.text()
+        if not validate_float(valstr):
+            return
+        # Scale value to int
+        self._dial.setValue(int(float(valstr)*1000))
         self._bar.update()
 
     def set_range(self, min : float, max : float):

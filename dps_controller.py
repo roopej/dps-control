@@ -26,28 +26,11 @@ from time import sleep
 
 from dps_status import DPSStatus
 from dps_engine import DPSEngine
-#import dps_config as conf
+import utils
 
 # Global flag for stopping producing events
 STOP_EVENTS: bool = False
 VERSION: str = '0.2'
-
-# Simple value validators
-def validate_float(self, value) -> bool:
-    """Check if string can be interpreted as float"""
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
-
-def validate_int(self, value) -> bool:
-    """Check if string can be interpreted as int"""
-    try:
-        int(value)
-        return True
-    except ValueError:
-        return False
 
 class DPSController:
     """Handles logic and parsing commands"""
