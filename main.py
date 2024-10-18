@@ -1,9 +1,9 @@
-"""CLI Interface for DPS Control"""
+"""User Interfaces for DPS Control"""
 import sys
 from queue import SimpleQueue
 from dps_controller import DPSController
 from dps_cli import DPSCli
-from dps_gui import launch_gui
+from dps_gui import DPSGui
 import dps_config as conf
 
 def main():
@@ -19,9 +19,10 @@ def main():
 
     if len(args) > 1 and args[1] == '--cli':
         # Create view and pass controller to it and start
-        cli = DPSCli(controller)
-        cli.start()
+        ui = DPSCli(controller)
+        ui.start()
     else:
-        launch_gui(controller)
+        ui = DPSGui(controller)
+
 if __name__ == "__main__":
     main()
