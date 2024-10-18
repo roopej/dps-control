@@ -32,6 +32,23 @@ from dps_engine import DPSEngine
 STOP_EVENTS: bool = False
 VERSION: str = '0.2'
 
+# Simple value validators
+def validate_float(self, value) -> bool:
+    """Check if string can be interpreted as float"""
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
+
+def validate_int(self, value) -> bool:
+    """Check if string can be interpreted as int"""
+    try:
+        int(value)
+        return True
+    except ValueError:
+        return False
+
 class DPSController:
     """Handles logic and parsing commands"""
     def __init__(self, port: str, slave: int, events: SimpleQueue = None) -> None:
@@ -67,7 +84,7 @@ class DPSController:
         """Convenience method to get just the port info"""
         return (
             True,
-            f"Connected:\t{self.status.connected}\nPort:\t\t{self.status.port}\nSlave:\t\t{self.status.slave}",
+            f'Connected:\t{self.status.connected}\nPort:\t\t{self.status.port}\nSlave:\t\t{self.status.slave}',
         )
 
     def get_connected(self) -> bool:
@@ -110,8 +127,8 @@ class DPSController:
         """Parse input command and act upon it. Return false if quit requested"""
 
         # Special case for quitting program
-        if cmd == "q":
-            return (True, "Quit requested")
+        if cmd == 'q':
+            return (True, 'Quit requested')
 
         # Tuple containing handler information
         execute: tuple[Callable, str, bool] = self.__get_cmd_and_validate(cmd)
@@ -120,33 +137,17 @@ class DPSController:
         if bool(execute[2]) and not self.status.connected:
             return (
                 False,
-                "This command requires connection to DPS device. Use the 'c' command to connect first.",
+                'This command requires connection to DPS device. Use the \'c\' command to connect first.',
             )
 
         # If no callback was parsed
         if execute[0] is None:
-            return (False, "Invalid command")
+            return (False, 'Invalid command')
 
         # Execute
         return execute[0](execute[1])
 
     # Private methods
-    def __validate_float(self, value) -> bool:
-        """Check if string can be interpreted as float"""
-        try:
-            float(value)
-            return True
-        except ValueError:
-            return False
-
-    def __validate_int(self, value) -> bool:
-        """Check if string can be interpreted as int"""
-        try:
-            int(value)
-            return True
-        except ValueError:
-            return False
-
     def __handle_connect(self, cmd) -> tuple[bool, str]:
         """Handle connect command"""
         if self.status.connected:
@@ -175,25 +176,37 @@ class DPSController:
     def __handle_set_port(self, port) -> tuple[bool, str]:
         """Handle set port"""
         if len(port) == 0:
-            return (False, "Port argument is required")
+            return (False, 'Port argument is required')
         self.status.port = port
-        return (True, f"Port set to {port}")
+        return (True, f'Port set to {port}')
 
     def __handle_set_volts(self, args) -> tuple[bool, str]:
         """Function to handle set volts command"""
-        if self.__validate_float(args):
+        if validate_float(args):
             ret: tuple[bool, str] = self.engine.set_volts(float(args))
             if not ret[0]:
-                return (False, "Set volts failed")
-            return (True, "Success")
+                return (False, 'Set volts failed')
+            return (True, 'Success')
+
+    def __handle_set_volts_and_amps(self, args) -> tuple[bool, str]:
+        """Function to handle set volts command"""
+        if len(args.split() < 2):
+            return (False, 'Invalid values')
+        volts: str = args[0]
+        amps: str = args[1]
+        if validate_float(volts) and validate_float(amps):
+            ret: tuple[bool, str] = self.engine.set_volts_and_amps(float(volts), float(amps))
+            if not ret[0]:
+                return (False, 'Set volts failed')
+            return (True, 'Success')
 
     def __handle_set_amps(self, args) -> tuple[bool, str]:
         """Function to handle set amps command"""
-        if self.__validate_float(args):
+        if validate_float(args):
             ret: tuple[bool, str] = self.engine.set_amps(float(args))
             if not ret[0]:
-                return (False, "Set amps failed")
-            return (True, "Success")
+                return (False, 'Set amps failed')
+            return (True, 'Success')
 
     def __get_cmd_and_validate(self, cmd: str) -> tuple[Callable, str, bool]:
         """Get command handler and validate args"""
@@ -205,17 +218,19 @@ class DPSController:
             args: str = cmd.split()[1]
 
         # Commands to handle (handler, arguments, connection_required)
-        if main_cmd == "c":
+        if main_cmd == 'c':
             return (self.__handle_connect, args, False)
-        elif main_cmd == "p":
+        elif main_cmd == 'p':
             return (self.__handle_set_port, args, False)
-        elif main_cmd == "v":
+        elif main_cmd == 'v':
             return (self.__handle_set_volts, args, True)
-        elif main_cmd == "a":
+        elif main_cmd == 'va':
+            return (self.__handle_set_volts_and_amps, args, True)
+        elif main_cmd == 'a':
             return (self.__handle_set_amps, args, True)
-        elif main_cmd == "i":
+        elif main_cmd == 'i':
             return (self.__handle_info, args, True)
-        elif main_cmd == "x":
+        elif main_cmd == 'x':
             return (self.__handle_power_switch, args, True)
         else:
-            return (None, "", False)
+            return (None, '', False)
