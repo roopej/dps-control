@@ -43,7 +43,7 @@ class ToggleButton(QPushButton):
                 "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #009900, stop: 1 #00bb00);"
                 "}"
                 "QPushButton {"
-                "background-color: #aaaaaa);"
+                "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #990000, stop: 1 #bb0000);"
                 "}"
                 )
         self.setStyleSheet(style)

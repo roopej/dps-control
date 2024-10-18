@@ -1,6 +1,8 @@
 from PySide6.QtWidgets import QLineEdit, QPushButton, QLabel
 from PySide6.QtGui import QFont, QPalette, QColor
 from PySide6.QtCore import Qt
+from toggle import ToggleButton
+from custom_widgets.togglebutton import ToggleButton
 
 DEFAULT_FONT = 'Arial'
 
@@ -23,14 +25,19 @@ def get_lineedit(text: str, fontsize: int, maxlen: int = 128, focus: Qt.FocusPol
     edit.setMaxLength(maxlen)
     return edit
 
-def get_button(text: str) -> QPushButton:
-    # Ad-hoc style
+def button_factory(text: str, toggle: bool = False) -> QPushButton:
+    # Default style for non-toggle button
     btnStyle = (
         "border-radius: 7;"
     )
-    btn = QPushButton(text)
+    if not toggle:
+        btn = QPushButton(text)
+        btn.setStyleSheet(btnStyle)
+    else:
+        print('Toggle')
+        btn = ToggleButton(text)
+
     btn.setFont(default_font())
-    btn.setStyleSheet(btnStyle)
     btn.setFixedSize(150, 80)
     return btn
 
