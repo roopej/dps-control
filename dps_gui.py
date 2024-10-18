@@ -4,6 +4,7 @@ from PySide6.QtCore import Qt, QFile, QTextStream
 from PySide6.QtGui import QFont, QPalette, QColor
 import sys
 import breeze_pyside6
+from custom_widgets import *
 
 DEFAULT_FONT = 'Arial'
 
@@ -72,6 +73,15 @@ class DPSMainWindow(QMainWindow):
         self.slaveLabel:QLabel = get_label('Slave', fontsize)
         self.slaveEdit: QLineEdit = get_lineedit('', fontsize, 2)
         self.slaveEdit.setMaximumWidth(140)
+
+        statusHBox = QHBoxLayout()
+        status_line = get_label('Connected', 12)
+        status_line.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        status_indicator = statusindicator.StatusIndicator(size = 20)
+        statusHBox.addStretch()
+        statusHBox.addWidget(status_line)
+        statusHBox.addWidget(status_indicator)
+
         self.connectButton: QPushButton = get_button('Connect')
 
 
@@ -84,6 +94,7 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(self.slaveEdit)
         layout.addStretch()
         layout.addWidget(QHLine())
+        layout.addLayout(statusHBox)
         layout.addWidget(self.connectButton)
         return layout
 
