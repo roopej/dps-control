@@ -1,3 +1,6 @@
+"""
+Simple CLI to use DPS Control engine
+"""
 class DPSCli:
     """CLI view, passes commands to DPS Controller"""
     def __init__(self, controller):
