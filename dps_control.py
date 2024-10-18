@@ -5,6 +5,8 @@ import minimalmodbus
 from enum import IntEnum
 from serial import SerialException
 from minimalmodbus import ModbusException
+
+# Configuration file
 import dps_config as conf
 
 # Constants
