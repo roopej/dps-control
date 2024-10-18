@@ -87,8 +87,8 @@ class DPSMainWindow(QMainWindow):
 
         # Dials for Volts and Amps
         va_dial_layout = QHBoxLayout()
-        vcontrol = dialbar.DialBar('V')
-        acontrol = dialbar.DialBar('A')
+        vcontrol = dialbar.DialBar('V', 4)
+        acontrol = dialbar.DialBar('A', 5)
         vcontrol.set_range(0.0, 3.0)
         acontrol.set_range(0,5)
         va_dial_layout.addWidget(vcontrol)

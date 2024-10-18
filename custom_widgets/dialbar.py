@@ -5,6 +5,7 @@ from utils import get_button, get_label, get_lineedit
 class _Bar(QtWidgets.QWidget):
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.track_mouse_y : int = 0
         self.setSizePolicy(
             QtWidgets.QSizePolicy.MinimumExpanding,
             QtWidgets.QSizePolicy.MinimumExpanding
@@ -12,6 +13,24 @@ class _Bar(QtWidgets.QWidget):
 
     def sizeHint(self) -> QtCore.QSize:
         return QtCore.QSize(30,120)
+
+    def mousePressEvent(self, event):
+        """Record position where mouse was pressed, used to track drag"""
+        self.track_mouse_y = event.globalPos().y()
+
+    def mouseMoveEvent(self, event):
+        """Compare y position during mouse drag and adjust value"""
+        if event.buttons() & QtCore.Qt.MouseButton.LeftButton:
+            if event.globalPos().y() > self.track_mouse_y:
+                dial = self.parent()._dial
+                curval = dial.value()
+                dial.setValue(curval - 5)
+            elif event.globalPos().y() < self.track_mouse_y:
+                dial = self.parent()._dial
+                curval = dial.value()
+                dial.setValue(curval + 5)
+
+        self.update()
 
     def paintEvent(self, e):
         meter_width = 35
@@ -75,7 +94,7 @@ class _Bar(QtWidgets.QWidget):
 
 class DialBar(QtWidgets.QWidget):
     """Combination of dial and vertical bar for settings values"""
-    def __init__(self, unit: str, *args, **kwargs) -> None:
+    def __init__(self, unit: str, maxlen: int, *args, **kwargs) -> None:
         super(DialBar, self).__init__(*args, **kwargs)
 
         # Instance variables
@@ -93,7 +112,7 @@ class DialBar(QtWidgets.QWidget):
 
         # Display part
         bottom_layout = QtWidgets.QHBoxLayout()
-        self._input: QtWidgets.QLineEdit = get_lineedit('0.00', 18, 4, Qt.FocusPolicy.StrongFocus)
+        self._input: QtWidgets.QLineEdit = get_lineedit('0.00', 18, maxlen, Qt.FocusPolicy.StrongFocus)
         self._input.setMaximumWidth(100)
         self._input.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         volt_unit_label: QtWidgets.QLabel = get_label(unit, 22)
@@ -124,11 +143,3 @@ class DialBar(QtWidgets.QWidget):
         except ValueError:
             return 0.0
         return val
-
-    # def paintEvent(self, e) -> None:
-    #     painter = QtGui.QPainter(self)
-    #     brush = QtGui.QBrush()
-    #     brush.setColor(QtGui.QColor('black'))
-    #     brush.setStyle(Qt.BrushStyle.SolidPattern)
-    #     rect = QtCore.QRect(10, 0, painter.device().width()-20, painter.device().height()-150)
-    #     painter.fillRect(rect, brush)
