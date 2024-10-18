@@ -41,21 +41,21 @@ class DPSMainWindow(QMainWindow):
         """This is the leftmost panel containing setup items"""
         layout = QVBoxLayout()
         fontsize = 14
-        self.portLabel: QLabel = get_label('Port', fontsize)
-        self.portEdit: QLineEdit = get_lineedit('', fontsize)
-        self.portEdit.setMaximumWidth(140)
-        self.portEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.portEdit.setText(conf.ttyPort)
-        self.baudLabel: QLabel = get_label('Baud rate', fontsize)
-        self.baudEdit: QLineEdit = get_lineedit('', fontsize, 6)
-        self.baudEdit.setMaximumWidth(140)
-        self.baudEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.baudEdit.setText('9600')
-        self.slaveLabel:QLabel = get_label('Slave', fontsize)
-        self.slaveEdit: QLineEdit = get_lineedit('', fontsize, 2)
-        self.slaveEdit.setMaximumWidth(140)
-        self.slaveEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.slaveEdit.setText(str(conf.slave))
+        portLabel: QLabel = get_label('Port', fontsize)
+        portEdit: QLineEdit = get_lineedit('', fontsize)
+        portEdit.setMaximumWidth(140)
+        portEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        portEdit.setText(conf.ttyPort)
+        baudLabel: QLabel = get_label('Baud rate', fontsize)
+        baudEdit: QLineEdit = get_lineedit('', fontsize, 6)
+        baudEdit.setMaximumWidth(140)
+        baudEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        baudEdit.setText('9600')
+        slaveLabel:QLabel = get_label('Slave', fontsize)
+        slaveEdit: QLineEdit = get_lineedit('', fontsize, 2)
+        slaveEdit.setMaximumWidth(140)
+        slaveEdit.setAlignment(Qt.AlignmentFlag.AlignRight)
+        slaveEdit.setText(str(conf.slave))
 
         statusHBox = QHBoxLayout()
         status_line = get_label('Connected', 12)
@@ -70,12 +70,12 @@ class DPSMainWindow(QMainWindow):
         self.button_connect.clicked.connect(self, self.__handle_buttons)
 
         layout.addWidget(QHLine())
-        layout.addWidget(self.portLabel)
-        layout.addWidget(self.portEdit)
-        layout.addWidget(self.baudLabel)
-        layout.addWidget(self.baudEdit)
-        layout.addWidget(self.slaveLabel)
-        layout.addWidget(self.slaveEdit)
+        layout.addWidget(portLabel)
+        layout.addWidget(portEdit)
+        layout.addWidget(baudLabel)
+        layout.addWidget(baudEdit)
+        layout.addWidget(slaveLabel)
+        layout.addWidget(slaveEdit)
         layout.addStretch()
         layout.addWidget(QHLine())
         layout.addLayout(statusHBox)
@@ -282,12 +282,21 @@ class DPSMainWindow(QMainWindow):
             #  * Set toggle button status accordingly
         elif sender_name == 'button_connect':
             self.log('Connecting')
+            #cmd: str = f'c {port}'
+            #self.log(f'Set output: {vstr} V {astr} A')
+            # TODO:
+            #  * Send command here
+            #  * Check if connection was successful
+            #  * Set connected LED accordingly
+            #  * No disconnect option necessary
         elif sender_name == 'button_set':
             vstr = self.volt_control.get_value()
             astr = self.amp_control.get_value()
             cmd: str = f'va {vstr} {astr}'
             self.log(f'Set output: {vstr} V {astr} A')
-            # TODO: Send command here
+            # TODO:
+            #  * Send command here
+            #  * Check minimum and maximum limits and cancel if necessary
             sender.setEnabled(False)
 
     # Public methods
