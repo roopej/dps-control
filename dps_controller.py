@@ -47,7 +47,7 @@ class DPSController:
         self.event_thread : threading.Thread = None
 
         # Instance to talk to DPS device through Modbus
-        self.dps_engine = DPSEngine(self.dps_state.port, self.dps_state.slave, True)
+        self.dps_engine = DPSEngine(self.dps_state.port, self.dps_state.slave, False)
 
     def connect(self) -> tuple[bool, str]:
         """Start controller, connect to device"""
@@ -76,8 +76,8 @@ class DPSController:
         STOP_EVENTS = False
         running = True
         while running:
-            self.event_queue.put_nowait("Test event")
-            print('Writing event to queue....')
+            registers : dict[str, any] = self.dps_engine.get_status()
+            self.event_queue.put_nowait(registers)
 
             if STOP_EVENTS:
                 running = False
@@ -136,6 +136,8 @@ class DPSController:
 
     def __handle_connect(self, cmd) -> tuple[bool, str]:
         """Handle connect command"""
+        if self.dps_state.connected:
+            return (False, 'Already connected')
         if len(cmd.split()) > 1:
             self.dps_state.port = cmd.split()[1]
         return self.connect()
@@ -154,6 +156,8 @@ class DPSController:
 
         self.dps_engine.set_power(switchto)
         self.dps_state.onoff = switchto
+        pwr = 'ON' if switchto is True else 'OFF'
+        return (True, f'Power switched {pwr}')
 
     def __handle_set_port(self, port) -> tuple[bool, str]:
         """Handle set port"""
