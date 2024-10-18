@@ -15,7 +15,7 @@ VERSION = "0.1"
 
 # Global Modbus handle
 INSTRUMENT = None
-PORT = conf.ttyDevice
+PORT = conf.ttyPort
 PWRON = False
 
 # In case of problems, set to True to see better debug prints
