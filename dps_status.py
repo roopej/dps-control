@@ -1,8 +1,6 @@
 from dataclasses import dataclass, field
-
 """
-DPSStatus module represents the registers of DPS device as well as some Modbus
-related variables
+DPSStatus module represents the status of the controller, including the registers of DPS device
 """
 
 @dataclass
