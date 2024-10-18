@@ -31,7 +31,7 @@ class Register(IntEnum):
 # Decode modbus status response
 def decode_modbus_status_response(b):
     if (len(b) != 20):
-        print("Invalid Modbus response")
+        print('Invalid Modbus response')
         return
 
     rv = {'U-Set': b[0] / 100.0,
@@ -54,7 +54,7 @@ def decode_modbus_status_response(b):
 # Set device voltage
 def set_voltage(volts):
     if (volts > conf.max_voltage or volts < conf.min_voltage):
-        print("Voltage must be between %d and %d" % (conf.min_voltage, conf.max_voltage))
+        print('Voltage must be between %d and %d' % (conf.min_voltage, conf.max_voltage))
         return
     instrument.write_register(Register.VOLTS, value=volts, number_of_decimals=2)
 
@@ -62,7 +62,7 @@ def set_voltage(volts):
 # Set device current
 def set_current(amps):
     if (amps > conf.max_current or amps < conf.min_current):
-        print("Current must be between %d and %d" % (conf.min_current, conf.max_current))
+        print('Current must be between %d and %d' % (conf.min_current, conf.max_current))
         return
     instrument.write_register(Register.AMPS, value=amps, number_of_decimals=3)
 
@@ -86,20 +86,20 @@ def validateInput(val, valtype):
     elif (valtype == ValueType.INT):
         val = int(val)
     else:
-        print("Invalid value")
+        print('Invalid value')
         ret = False
     return ret
 
 # Print some help
 def printHelp():
-    print("dps-control v%s" % (VERSION))
-    print("-----------------------------------------------------------")
-    print("Available commands:")
-    print("\ta <value>\tSet current to value (float)")
-    print("\tv <value>\tSet voltage to value (float)")
-    print("\tl\t\tLive monitoring mode, exit with [CTRL-C]")
-    print("\th\t\tPrint this text")
-    print("\tq\t\tQuit program")
+    print('dps-control v%s' % (VERSION))
+    print('-----------------------------------------------------------')
+    print('Available commands:')
+    print('\ta <value>\tSet current to value (float)')
+    print('\tv <value>\tSet voltage to value (float)')
+    print('\tl\t\tLive monitoring mode, exit with [CTRL-C]')
+    print('\th\t\tPrint this text')
+    print('\tq\t\tQuit program')
 
 # Parse command and execute it
 def parseCommand(cmd):
@@ -121,16 +121,20 @@ def parseCommand(cmd):
                 print(msg)
                 set_current(float(amps))
         elif (mainCmd == 'i'):
-            print("Getting info...")
+            print('Getting info...')
             print(decode_modbus_status_response(read_registers()))
         elif (mainCmd == 'l'):
-            print("Running live monitoring, press [CTRL-C] to stop...")
+            print('Running live monitoring, press [CTRL-C] to stop...')
 
             try:
+                index = 1
                 while True:
-                    print("Monitoring...")
+                    print('\tMonitoring... %d' % index)
+                    print('\x1b[2F')
+                    index=index+1
                     time.sleep(1)
             except KeyboardInterrupt:
+                print('\n')
                 pass
 
         elif (mainCmd == 'h'):
@@ -146,7 +150,7 @@ def parseCommand(cmd):
 
 def initialize():
     # Initialize Modbus
-    print("Initializing...")
+    print('Initializing...')
     global instrument
     try:
         instrument = minimalmodbus.Instrument(port=conf.ttyDevice, slaveaddress=conf.slave)
@@ -162,7 +166,7 @@ def main():
     running = True
 
     if (initialize() != True):
-        print("ERROR: Cannot initialize Modbus")
+        print('ERROR: Cannot initialize Modbus')
         return
 
     # Main loop
