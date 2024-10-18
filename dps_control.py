@@ -141,12 +141,19 @@ def print_help():
 def suggest_help():
     print("Invalid command. Type h for help.")
 
+def parse_main(cmd, *vals):
+    """Parse the main command and its alternatives"""
+    main_cmd = cmd.split()[0].lower()
+    for val in vals:
+        if main_cmd == val:
+            return True
+    return False
+
 def parse_command(cmd):
     """Parse input command"""
     ret = True
     try:
-        main_cmd = cmd.split()[0].lower()
-        if main_cmd == 'v':
+        if parse_main(cmd, 'v', 'volts', 'volt'):
             if len(cmd.split()) < 2:
                 suggest_help()
                 return ret
@@ -156,7 +163,7 @@ def parse_command(cmd):
                 msg = "%s %s %s" % ('Set voltage to:', volts, 'V')
                 print(msg)
                 set_voltage(float(volts))
-        elif main_cmd == 'a':
+        elif parse_main(cmd, 'a', 'amps', 'amp'):
             if len(cmd.split()) < 2:
                 suggest_help()
                 return ret
@@ -166,10 +173,10 @@ def parse_command(cmd):
                 msg = "%s %s %s" % ('Set current to:', amps, 'A')
                 print(msg)
                 set_current(float(amps))
-        elif main_cmd == 'i':
+        elif parse_main(cmd, 'i', 'info'):
             print('Getting info...')
             print(decode_modbus_status_response(read_registers(0x0, 20)))
-        elif main_cmd == 'p':
+        elif parse_main(cmd, 'p', 'port'):
             if len(cmd.split()) < 2:
                 suggest_help()
                 return ret
@@ -178,7 +185,7 @@ def parse_command(cmd):
             msg = '%s: %s' % ('Setting serial device port to', PORT)
             print(msg)
             initialize()
-        elif main_cmd == 'l':
+        elif parse_main(cmd, 'l', 'live'):
             print('Running live monitoring, press [CTRL-C] to stop...')
             try:
                 index = 1
@@ -188,11 +195,11 @@ def parse_command(cmd):
                     time.sleep(0.5)
             except KeyboardInterrupt:
                 print('\n')
-        elif main_cmd == 'x':
+        elif parse_main(cmd, 'x', 'execute'):
             toggle_power()
-        elif main_cmd == 'h':
+        elif parse_main(cmd, 'h', '?', 'help'):
             print_help()
-        elif main_cmd == 'q':
+        elif parse_main(cmd, 'q', 'quit', 'exit'):
             ret = False
         return ret
     except (TypeError, ValueError, ModbusException, SerialException) as error:
