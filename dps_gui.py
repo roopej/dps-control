@@ -85,15 +85,15 @@ class DPSMainWindow(QMainWindow):
         """Panel for setting volts and amps"""
         layout = QVBoxLayout()
 
+        # Dials for Volts and Amps
         va_dial_layout = QHBoxLayout()
-        #va_input_layout = QHBoxLayout()
-
         vcontrol = dialbar.DialBar('V')
         acontrol = dialbar.DialBar('A')
         va_dial_layout.addWidget(vcontrol)
         va_dial_layout.addStretch()
         va_dial_layout.addWidget(acontrol)
 
+        # Button to commit values
         self.button_set: QPushButton = get_button('Set')
         self.button_set.setObjectName('button_set')
         self.button_set.setMinimumWidth(150)
@@ -107,50 +107,7 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(self.button_set, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         return layout
-        # # Volt section
-        # volt_label: QLabel = get_label('Volts', 20)
-        # volt_layout = QHBoxLayout()
-        # self.volt_dial = QDial()
-        # self.volt_dial.setMinimumWidth(100)
-        # self.volt_dial.setNotchesVisible(True)
-        # self.volt_dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        # self.volt_input: QLineEdit = get_lineedit('0.00', 18, 4, Qt.FocusPolicy.StrongFocus)
-        # self.volt_input.setMaximumWidth(100)
-        # volt_unit_label: QLabel = get_label('V', 22)
 
-        # volt_layout.addWidget(self.volt_dial)
-        # volt_layout.addWidget(self.volt_input)
-        # volt_layout.addWidget(volt_unit_label)
-
-        # # Amp section
-        # amp_label: QLabel = get_label('Amps', 20)
-        # amp_layout = QHBoxLayout()
-        # self.amp_dial = QDial()
-        # self.amp_dial.setMinimumWidth(100)
-        # self.amp_dial.setNotchesVisible(True)
-        # self.amp_dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
-        # self.amp_input: QLineEdit = get_lineedit('0.000', 18, 5, Qt.FocusPolicy.StrongFocus)
-        # self.amp_input.setMaximumWidth(100)
-        # amp_unit_label: QLabel = get_label('A', 22)
-
-        # amp_layout.addWidget(self.amp_dial)
-        # amp_layout.addWidget(self.amp_input)
-        # amp_layout.addWidget(amp_unit_label)
-        # self.button_set: QPushButton = get_button('Set')
-        # self.button_set.setObjectName('button_set')
-        # self.button_set.setMaximumWidth(100)
-        # self.button_set.setEnabled(False)
-        # self.button_set.clicked.connect(self.__handle_buttons)
-
-        # layout.addWidget(QHLine())
-        # layout.addWidget(volt_label)
-        # layout.addLayout(volt_layout)
-        # layout.addWidget(amp_label)
-        # layout.addLayout(amp_layout)
-        # layout.addWidget(QHLine())
-        # layout.addWidget(self.button_set)
-
-        # return layout
 
     def __get_output_panel(self) -> QVBoxLayout:
         """This is the rightmost vertical panel showing output values"""
@@ -245,7 +202,9 @@ class DPSMainWindow(QMainWindow):
         output_label.setMargin(10)
 
         layout.addWidget(setup_label)
+        layout.addStretch()
         layout.addWidget(control_label)
+        layout.addStretch()
         layout.addWidget(output_label)
 
         return layout
