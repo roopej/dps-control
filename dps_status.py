@@ -27,7 +27,7 @@ class DPSStatus:
     connected: bool = False
     port: str = "/dev/ttyUSB0"
     slave: int = 1
-    bauds: int = 9600
+    baudrate: int = 9600
     debug: bool = True
 
 if __name__ == "__main__":

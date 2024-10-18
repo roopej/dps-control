@@ -28,7 +28,7 @@ class DPSEngine:
         self.instrument = None
         self.debug: bool = debug
 
-    def connect(self, port: str, slave: int) -> tuple[bool, str]:
+    def connect(self, port: str, slave: int, baudrate: int) -> tuple[bool, str]:
         """Connect to DPS through modbus"""
         try:
             self.instrument = minimalmodbus.Instrument(port, slave)
@@ -36,7 +36,7 @@ class DPSEngine:
             print(error)
             return (False, 'Serial exception')
 
-        self.instrument.serial.baudrate = 9600
+        self.instrument.serial.baudrate = baudrate
         self.instrument.serial.bytesize = 8
         self.instrument.serial.timeout = 0.5
         self.instrument.mode = minimalmodbus.MODE_RTU
