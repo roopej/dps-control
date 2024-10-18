@@ -8,7 +8,7 @@ import breeze_pyside6
 DEFAULT_FONT = 'Arial'
 
 # Helper functions
-def default_font(size: int) -> QFont:
+def default_font(size: int = 18) -> QFont:
     font = QFont(DEFAULT_FONT)
     font.setPointSize(size)
     return font
@@ -25,6 +25,18 @@ def get_lineedit(text: str, fontsize: int, maxlen: int = 128, focus: Qt.FocusPol
     edit.setFocusPolicy(focus)
     edit.setMaxLength(maxlen)
     return edit
+
+def get_button(text: str) -> QPushButton:
+    # Ad-hoc style
+    btnStyle = (
+        "border-radius: 7;"
+    )
+    btn = QPushButton(text)
+    btn.setFont(default_font())
+    btn.setStyleSheet(btnStyle)
+    return btn
+
+
 
 class QVLine(QFrame):
     def __init__(self) -> None:
@@ -60,8 +72,8 @@ class DPSMainWindow(QMainWindow):
         self.slaveLabel:QLabel = get_label('Slave', fontsize)
         self.slaveEdit: QLineEdit = get_lineedit('', fontsize, 2)
         self.slaveEdit.setMaximumWidth(140)
-        self.connectButton = QPushButton('Connect')
-        self.connectButton.setFont('Arial')
+        self.connectButton: QPushButton = get_button('Connect')
+
 
         layout.addWidget(QHLine())
         layout.addWidget(self.portLabel)
@@ -108,7 +120,7 @@ class DPSMainWindow(QMainWindow):
         amp_layout.addWidget(self.amp_dial)
         amp_layout.addWidget(self.amp_input)
         amp_layout.addWidget(amp_unit_label)
-        self.setbutton = QPushButton('Set')
+        self.setbutton: QPushButton = get_button('Set')
         self.setbutton.setMaximumWidth(100)
 
         layout.addWidget(QHLine())
@@ -180,7 +192,7 @@ class DPSMainWindow(QMainWindow):
         pout_hbox.addWidget(pout_edit)
         pout_hbox.addWidget(pout_unit_label)
 
-        self.button_onoff: QPushButton = QPushButton('Power')
+        self.button_onoff: QPushButton = get_button('Power')
 
         # Pack stuff into layout
         layout.addWidget(QHLine())
