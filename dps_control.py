@@ -211,7 +211,10 @@ def initialize():
         INSTRUMENT.serial.timeout = 0.5
         INSTRUMENT.mode = minimalmodbus.MODE_RTU
         INSTRUMENT.close_port_after_each_call = False
-        INSTRUMENT.write_register(Register.PWR_ONOFF, value=0, number_of_decimals=0)
+
+        if conf.start_power_off:
+            INSTRUMENT.write_register(Register.PWR_ONOFF, value=0, number_of_decimals=0)
+
         print(INSTRUMENT)
         print('\n')
         a = get_current()
