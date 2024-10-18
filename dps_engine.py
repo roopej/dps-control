@@ -134,7 +134,6 @@ class DPSEngine:
         retstr += f'Backlight:\t\t{registers[10]}\n'
         retstr += f'Model:\t\t{registers[11]}\n'
         retstr += f'Firmware:\t{registers[12]}\n'
-
         return (True, retstr)
 
     # Private methods
