@@ -14,12 +14,14 @@ class _Bar(QtWidgets.QWidget):
         return QtCore.QSize(30,120)
 
     def paintEvent(self, e):
-        painter = QtGui.QPainter(self)
+        meter_width = 30
 
+        # Draw black meter bar, leave space for meter on right
+        painter = QtGui.QPainter(self)
         brush = QtGui.QBrush()
         brush.setColor(QtGui.QColor('black'))
         brush.setStyle(Qt.SolidPattern)
-        rect = QtCore.QRect(0, 0, painter.device().width(), painter.device().height())
+        rect = QtCore.QRect(0, 0, painter.device().width()-meter_width, painter.device().height())
         painter.fillRect(rect, brush)
 
         # Get current state.
@@ -27,6 +29,7 @@ class _Bar(QtWidgets.QWidget):
         vmin, vmax = dial.minimum(), dial.maximum()
         value = dial.value()
 
+        # Padding for bar
         padding = 5
 
         # Define our canvas.
@@ -35,31 +38,24 @@ class _Bar(QtWidgets.QWidget):
         pc = (value - vmin) / (vmax - vmin)
         bar_height = pc * d_height
 
-        print(f'Height: {d_height} Width: {d_width} PC:{pc}, bar_height: {bar_height}')
+        # Meter
+        num_lines: int = int(vmax / 1000)
+        line_space: float = d_height / num_lines
 
-        rect = QtCore.QRect(5, d_height-bar_height, d_width, bar_height)
+        print(f'Height: {d_height} Width: {d_width} PC:{pc}, bar_height: {bar_height}, min: {vmin}, max: {vmax}, line_space: {line_space}')
+        for n in range(0, num_lines+1, 1):
+            x1 = d_width - 30
+            y1 = d_height - int(n * line_space)
+            x2 = d_width - 15
+            y2 = d_height - int(n * line_space)
+            print(f'{x1=} {y1=} {x2=} {y2=}')
+            painter.drawLine(d_width-30, d_height - int(n * line_space), d_width-15, d_height - int(n * line_space))
+
+        # Draw bar
+        rect = QtCore.QRect(5, d_height-bar_height, d_width-meter_width-padding, bar_height)
         brush.setColor(QtGui.QColor('yellow'))
         painter.fillRect(rect, brush)
         painter.end()
-
-        # Draw the bars.
-        # step_size = d_height / 50
-        # bar_height = step_size * 0.6
-        # bar_spacer = step_size * 0.4 / 2
-
-        # pc = (value - vmin) / (vmax - vmin)
-        # n_steps_to_draw = int(pc * 50)
-        # brush.setColor(QtGui.QColor('yellow'))
-        # for n in range(n_steps_to_draw):
-        #     rect = QtCore.QRect(
-        #         padding,
-        #         padding + d_height - ((n + 1) * step_size) + bar_spacer,
-        #         d_width,
-        #         bar_height
-        #     )
-        #     painter.fillRect(rect, brush)
-
-        # painter.end()
 
 class DialBar(QtWidgets.QWidget):
     """Combination of dial and vertical bar for settings values"""
