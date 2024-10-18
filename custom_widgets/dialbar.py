@@ -1,9 +1,10 @@
 from PySide6 import QtCore, QtGui, QtWidgets
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from utils import get_button, get_label, get_lineedit, validate_float
 
 
 class _Bar(QtWidgets.QWidget):
+    """This is the bar portion of the control unit"""
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
         self.track_mouse_y : int = 0
@@ -97,6 +98,9 @@ class _Bar(QtWidgets.QWidget):
 
 class DialBar(QtWidgets.QWidget):
     """Combination of dial and vertical bar for settings values"""
+    # Signal emitting new value as int
+    valuesChanged = Signal(int)
+
     def __init__(self, unit: str, maxlen: int, *args, **kwargs) -> None:
         super(DialBar, self).__init__(*args, **kwargs)
 
@@ -131,6 +135,7 @@ class DialBar(QtWidgets.QWidget):
     def _dial_value_changed(self) -> None:
         """Handle dial value change event"""
         self._input.setText(str(self._dial.value()/1000))
+        self.valuesChanged.emit(self._dial.value())
         self._bar.update()
 
     def _input_value_changed(self) -> None:
@@ -139,20 +144,22 @@ class DialBar(QtWidgets.QWidget):
         if not validate_float(valstr):
             return
         # Scale value to int
-        self._dial.setValue(int(float(valstr)*1000))
+        valint: int = int(float(valstr)*1000)
+        self._dial.setValue(valint)
+        self.valuesChanged.emit(valint)
         self._bar.update()
 
-    def set_range(self, min : float, max : float):
+    def set_range(self, min_val : float, max_val : float):
         """Set range of the dial"""
-        self._min_value = min
-        self._max_value = max
+        self._min_value = min_val
+        self._max_value = max_val
         self._dial.setMinimum(int(self._min_value*1000))
         self._dial.setMaximum(int(self._max_value*1000))
 
     def get_value(self) -> float:
         """Get value of input field as float"""
         try:
-            val : float = float(self.input.text())
+            val : float = float(self._input.text())
         except ValueError:
             return 0.0
         return val

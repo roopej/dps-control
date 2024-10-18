@@ -31,6 +31,7 @@ def get_button(text: str) -> QPushButton:
     btn = QPushButton(text)
     btn.setFont(default_font())
     btn.setStyleSheet(btnStyle)
+    btn.setFixedSize(150, 80)
     return btn
 
 def set_button_bg(btn: QPushButton, color: str, reset: bool = False) -> None:
