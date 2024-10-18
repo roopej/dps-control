@@ -51,12 +51,10 @@ class DPSMainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle('DPS Controller')
 
-    def __get_config_panel(self) -> QVBoxLayout:
-        """UI components for the leftmost config panel"""
+    def __get_setup_panel(self) -> QVBoxLayout:
+        """This is the leftmost panel containing setup items"""
         layout = QVBoxLayout()
         fontsize = 14
-        config_label: QLabel = get_label('SETUP', 22)
-        config_label.setMargin(15)
         self.portLabel: QLabel = get_label('Port', fontsize)
         self.portEdit: QLineEdit = get_lineedit('', fontsize)
         self.portEdit.setMaximumWidth(140)
@@ -69,7 +67,6 @@ class DPSMainWindow(QMainWindow):
         self.connectButton = QPushButton('Connect')
         self.connectButton.setFont('Arial')
 
-        layout.addWidget(config_label)
         layout.addWidget(QHLine())
         layout.addWidget(self.portLabel)
         layout.addWidget(self.portEdit)
@@ -82,12 +79,9 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(self.connectButton)
         return layout
 
-    def __get_set_panel(self) -> QVBoxLayout:
+    def __get_control_panel(self) -> QVBoxLayout:
         """Panel for setting volts and amps"""
         layout = QVBoxLayout()
-
-        control_label: QLabel = get_label('CONTROL', 22)
-        control_label.setMargin(15)
 
         # Volt section
         volt_label: QLabel = get_label('Volts', 20)
@@ -103,9 +97,6 @@ class DPSMainWindow(QMainWindow):
         volt_layout.addWidget(self.volt_dial)
         volt_layout.addWidget(self.volt_input)
         volt_layout.addWidget(volt_unit_label)
-        self.volt_setbutton = QPushButton('Set')
-        self.volt_setbutton.setMaximumWidth(100)
-        self.volt_setbutton
 
         # Amp section
         amp_label: QLabel = get_label('Amps', 20)
@@ -121,24 +112,22 @@ class DPSMainWindow(QMainWindow):
         amp_layout.addWidget(self.amp_dial)
         amp_layout.addWidget(self.amp_input)
         amp_layout.addWidget(amp_unit_label)
-        self.amp_setbutton = QPushButton('Set')
-        self.amp_setbutton.setMaximumWidth(100)
+        self.setbutton = QPushButton('Set')
+        self.setbutton.setMaximumWidth(100)
 
-        layout.addWidget(control_label)
+        layout.addWidget(QHLine())
         layout.addWidget(volt_label)
         layout.addLayout(volt_layout)
-        layout.addWidget(self.volt_setbutton)
         layout.addWidget(amp_label)
         layout.addLayout(amp_layout)
-        layout.addWidget(self.amp_setbutton)
+        layout.addWidget(QHLine())
+        layout.addWidget(self.setbutton)
 
         return layout
 
     def __get_output_panel(self) -> QVBoxLayout:
+        """This is the rightmost vertical panel showing output values"""
         layout: QVBoxLayout = QVBoxLayout()
-
-        output_label: QLabel = get_label('OUTPUT', 22)
-        output_label.setMargin(15)
 
         # Stylesheet change for out values
         editstyle = (
@@ -198,7 +187,7 @@ class DPSMainWindow(QMainWindow):
         self.button_onoff: QPushButton = QPushButton('Power')
 
         # Pack stuff into layout
-        layout.addWidget(output_label)
+        layout.addWidget(QHLine())
         layout.addWidget(vin_label)
         layout.addLayout(vin_hbox)
         layout.addWidget(vout_label)
@@ -213,46 +202,63 @@ class DPSMainWindow(QMainWindow):
 
         return layout
 
+    def __get_header_panel(self) -> QHBoxLayout:
+        """This is header row for names of panels"""
+        layout = QHBoxLayout()
 
-    def setup(self):
-        # Layout boxes
-        self.mainHLayout = QHBoxLayout()
+        # Header row of labels
+        setup_label: QLabel = get_label('SETUP', 22)
+        setup_label.setMargin(10)
+        control_label: QLabel = get_label('CONTROL', 22)
+        control_label.setMargin(10)
+        output_label: QLabel = get_label('OUTPUT', 22)
+        output_label.setMargin(10)
 
-        # Vertical boxes
-        self.configVLayout: QVBoxLayout = self.__get_config_panel()
-        self.setVLayout: QVBoxLayout = self.__get_set_panel()
-        self.outVLayout:QVBoxLayout = self.__get_output_panel()
+        layout.addWidget(setup_label)
+        layout.addWidget(control_label)
+        layout.addWidget(output_label)
 
-        # Separator lines
-        sep1: QFrame = QFrame()
-        sep1.setLineWidth(50)
-        sep1.setMidLineWidth(2)
-        sep1.setPalette(QPalette(QColor(99, 99, 99)))
-        sep1.setFrameShape(QFrame.Shape.HLine)
-        sep1.setFrameShadow(QFrame.Shadow.Sunken)
+        return layout
 
-        # Add vertical panels to horizontal
-        self.mainHLayout.addLayout(self.configVLayout)
-        #self.mainHLayout.addWidget(sep1)
-        self.mainHLayout.addWidget(QVLine(), 1)
-        self.mainHLayout.addLayout(self.setVLayout)
-        self.mainHLayout.addWidget(QVLine(), 1)
-        self.mainHLayout.addLayout(self.outVLayout)
+    def __get_panel_layout(self) -> QHBoxLayout:
+        """This is the main functional HBox containing controls etc"""
+        layout = QHBoxLayout()
+
+        # Vertical boxes inside HBox
+        layout.addLayout(self.__get_setup_panel())
+        layout.addWidget(QVLine())
+        layout.addLayout(self.__get_control_panel())
+        layout.addWidget(QVLine())
+        layout.addLayout(self.__get_output_panel())
+        return layout
+
+
+    def setup(self) -> None:
+        """Setup UI"""
+        # Main vertical layout
+        self.mainVLayout = QVBoxLayout()
+
+        # Two horizontal boxes, one for headers, one for controls etc
+        self.headerHLayout: QHBoxLayout = self.__get_header_panel()
+        self.panelHLayout: QHBoxLayout = self.__get_panel_layout()
+        self.mainVLayout.addLayout(self.headerHLayout)
+        self.mainVLayout.addLayout(self.panelHLayout)
 
         # Central widget
         self.centralWidget = QWidget()
-        self.centralWidget.setLayout(self.mainHLayout)
+        self.centralWidget.setLayout(self.mainVLayout)
         self.setCentralWidget(self.centralWidget)
 
 
 def set_styles(app: QApplication) -> None:
+    """Set style from breeze themes"""
     file = QFile(":/dark/stylesheet.qss")
     file.open(QFile.ReadOnly | QFile.Text)
     stream = QTextStream(file)
     app.setStyleSheet(stream.readAll())
 
-
 if __name__ == '__main__':
+    """Main application"""
     app = QApplication(sys.argv)
     set_styles(app)
     window = DPSMainWindow()
