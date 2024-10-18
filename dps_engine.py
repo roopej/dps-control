@@ -114,8 +114,8 @@ class DPSEngine:
         power: int | float = self.__read_register(DPSRegister.PWR_OUT, 2)
         return (True, str(power))
 
-    def get_status(self) -> tuple[bool, str]:
-        """Get dump of status variables of DPS, 20 registers starting from 0x0"""
+    def get_printable_status(self) -> tuple[bool, str]:
+        """Get dump of status variables of DPS, 20 registers starting from 0x0 as printable"""
         registers: List[int] = self.__read_registers(0x0, 20)
         if len(registers) != 20:
             return (False, 'Error reading DPS registers')
@@ -135,6 +135,28 @@ class DPSEngine:
         retstr += f'Model:\t\t{registers[11]}\n'
         retstr += f'Firmware:\t{registers[12]}\n'
         return (True, retstr)
+
+    def get_status(self) -> dict[str, any]:
+        """Get status as key-value pairs for event handling"""
+        registers: List[int] = self.__read_registers(0x0, 20)
+        if len(registers) != 20:
+            return None
+        ret: dict[str, any] = {
+            'U-Set': registers[0] / 100.0,
+            'I-Set': registers[1] / 1000.0,
+            'U-Out': registers[2] / 100.0,
+            'I-Out': registers[3] / 1000.0,
+            'P-Out': registers[4] / 100.0,
+            'U-In': registers[5] / 100.0,
+            'Locked': registers[6],
+            'Protected': registers[7],
+            'CV/CC': registers[8],
+            'ONOFF': registers[9],
+            'Backlight': registers[10],
+            'Model': registers[11],
+            'Firmware': registers[12],
+        }
+        return ret
 
     # Private methods
     # Communication through Modbus, catch exceptions on these, used internally by class

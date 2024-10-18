@@ -140,7 +140,7 @@ class DPSController:
 
     def __handle_info(self, cmd) -> tuple[bool, str]:
         """Handle info command"""
-        return self.dps_engine.get_status()
+        return self.dps_engine.get_printable_status()
 
     def __handle_power_switch(self, pwr) -> tuple[bool, str]:
         """Handle power on/off and toggle commands, toggle if specific argument"""
