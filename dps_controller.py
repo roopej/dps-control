@@ -40,7 +40,6 @@ class DPSController:
 
     def connect(self) -> tuple[bool,str]:
         """Start controller, connect to device"""
-        print('Connecting...')
         conn: tuple[bool, str] =  self.dps_engine.connect()
         if not conn[0]:
             return False, 'ERROR: Cannot connect to DPS device.'
@@ -99,6 +98,9 @@ class DPSController:
             self.dps_state.port = cmd.split()[1]
         return self.connect()
 
+    def __handle_info(self, cmd) -> tuple[bool, str]:
+        return self.dps_engine.get_status
+
     def __handle_set_port(self, port) -> tuple[bool, str]:
         """Handle set port"""
         if len(port) == 0:
@@ -140,5 +142,7 @@ class DPSController:
             return (self.__handle_set_volts, args, True)
         elif main_cmd == 'a':
             return (self.__handle_set_amps, args, True)
+        elif main_cmd == 'i':
+            return (self.__handle_info, args, True)
         else:
             return (None, '', False)
