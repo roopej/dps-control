@@ -13,16 +13,12 @@ import dps_config as conf
 # Constants
 VERSION = "0.1"
 
-# Set Modbus parameters
-minimalmodbus.MODE_RTU = 'rtu'
-minimalmodbus.BAUDRATE = 19200
-minimalmodbus.TIMEOUT = 0.5
-minimalmodbus.CLOSE_PORT_AFTER_EACH_CALL = False
+# Global Modbus handle
 INSTRUMENT = None
 PORT = conf.ttyDevice
 
 # In case of problems, set to True to see better debug prints
-DEBUG = True
+DEBUG = False
 
 class ValueType(IntEnum):
     """Type of a value"""
@@ -31,8 +27,11 @@ class ValueType(IntEnum):
 
 class Register(IntEnum):
     """Register entries"""
-    VOLTS = 0x0
-    AMPS = 0x1
+    VOLTS_SET = 0x0
+    AMPS_SET = 0x1
+    VOLTS_OUT = 0x2
+    AMPS_OUT = 0x3
+    PWR_OUT = 0x4
 
 def decode_modbus_status_response(b):
     """Decode Modbus response and return printable structure"""
@@ -57,28 +56,38 @@ def decode_modbus_status_response(b):
 
     return rv
 
+def decode_modbus_monitor_response(b):
+    """Decode Modbus response for live monitoring output"""
+    if len(b) != 6:
+        print('Invalid Modbus response')
+        return
+
+    ret_str = 'V: %s\tA: %s\tP: %s' % (b[0] / 100.0, b[1] / 1000.0, b[2] / 100.0)
+    return ret_str
+
+
 def set_voltage(volts):
     """Set voltage of DPS device"""
     if (volts > conf.max_voltage or volts < conf.min_voltage):
         print('Voltage must be between %d and %d' % (conf.min_voltage, conf.max_voltage))
         return
-    INSTRUMENT.write_register(Register.VOLTS, value=volts, number_of_decimals=2)
+    INSTRUMENT.write_register(Register.VOLTS_SET, value=volts, number_of_decimals=2)
 
 def set_current(amps):
     """Set current of DPS device"""
     if (amps > conf.max_current or amps < conf.min_current):
         print('Current must be between %d and %d' % (conf.min_current, conf.max_current))
         return
-    INSTRUMENT.write_register(Register.AMPS, value=amps, number_of_decimals=3)
+    INSTRUMENT.write_register(Register.AMPS_SET, value=amps, number_of_decimals=3)
 
-def read_registers():
-    """Read all registers of DPS device"""
-    registers = INSTRUMENT.read_registers(registeraddress=0x0, number_of_registers=20)
+def read_registers(address, number):
+    """Read registers of DPS device from address (number bytes)"""
+    registers = INSTRUMENT.read_registers(registeraddress=address, number_of_registers=number)
     return registers
 
 def command_prompt():
     """Get command from prompt"""
-    cmd = input('DPS: ')
+    cmd = input('DPS> ')
     return cmd
 
 def validateInput(val, valtype):
@@ -115,7 +124,7 @@ def parse_command(cmd):
     try:
         main_cmd = cmd.split()[0].lower()
         if main_cmd == 'v':
-            if len(main_cmd.split()) < 2:
+            if len(cmd.split()) < 2:
                 suggest_help()
                 return ret
             volts = cmd.split()[1]
@@ -125,7 +134,7 @@ def parse_command(cmd):
                 print(msg)
                 set_voltage(float(volts))
         elif main_cmd == 'a':
-            if len(main_cmd.split()) < 2:
+            if len(cmd.split()) < 2:
                 suggest_help()
                 return ret
             amps = cmd.split()[1]
@@ -136,9 +145,9 @@ def parse_command(cmd):
                 set_current(float(amps))
         elif main_cmd == 'i':
             print('Getting info...')
-            print(decode_modbus_status_response(read_registers()))
+            print(decode_modbus_status_response(read_registers(0x0, 20)))
         elif main_cmd == 'p':
-            if len(main_cmd.split()) < 2:
+            if len(cmd.split()) < 2:
                 suggest_help()
                 return ret
             global PORT
@@ -152,9 +161,8 @@ def parse_command(cmd):
             try:
                 index = 1
                 while True:
-                    print('\tMonitoring... %d' % index)
+                    print(decode_modbus_monitor_response(read_registers(0x02, 6)))
                     print('\x1b[2F')
-                    index=index+1
                     time.sleep(1)
             except KeyboardInterrupt:
                 print('\n')
@@ -174,6 +182,13 @@ def initialize():
     try:
         INSTRUMENT = minimalmodbus.Instrument(port=PORT, slaveaddress=conf.slave)
         INSTRUMENT.debug = DEBUG
+        INSTRUMENT.serial.baudrate = 9600
+        INSTRUMENT.serial.bytesize = 8
+        INSTRUMENT.serial.timeout = 0.5
+        INSTRUMENT.mode = minimalmodbus.MODE_RTU
+        INSTRUMENT.close_port_after_each_call = False
+
+        print(INSTRUMENT)
     except (TypeError, ValueError, ModbusException, SerialException) as error:
         print(error)
         return False
