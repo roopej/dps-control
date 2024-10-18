@@ -89,6 +89,8 @@ class DPSMainWindow(QMainWindow):
         va_dial_layout = QHBoxLayout()
         vcontrol = dialbar.DialBar('V')
         acontrol = dialbar.DialBar('A')
+        vcontrol.set_range(0.0, 12.0)
+        acontrol.set_range(0,5)
         va_dial_layout.addWidget(vcontrol)
         va_dial_layout.addStretch()
         va_dial_layout.addWidget(acontrol)
@@ -308,8 +310,7 @@ def launch_gui(controller: DPSController) -> None:
     window.setup()
     window.setFixedSize(600, 700)
     window.show()
-    window.log(f'dps-control v{controller.get_version()} starting...')
-    window.log('-------------------------------')
+    window.log(f'dps-control v{controller.get_version()}\n')
 
     #print(window.palette().window().color().name())
 
