@@ -55,7 +55,7 @@ class DPSMainWindow(QMainWindow):
         """UI components for the leftmost config panel"""
         layout = QVBoxLayout()
         fontsize = 14
-        config_label: QLabel = get_label('Configuration', 22)
+        config_label: QLabel = get_label('SETUP', 22)
         config_label.setMargin(15)
         self.portLabel: QLabel = get_label('Port', fontsize)
         self.portEdit: QLineEdit = get_lineedit('', fontsize)
@@ -70,6 +70,7 @@ class DPSMainWindow(QMainWindow):
         self.connectButton.setFont('Arial')
 
         layout.addWidget(config_label)
+        layout.addWidget(QHLine())
         layout.addWidget(self.portLabel)
         layout.addWidget(self.portEdit)
         layout.addWidget(self.baudLabel)
@@ -85,14 +86,18 @@ class DPSMainWindow(QMainWindow):
         """Panel for setting volts and amps"""
         layout = QVBoxLayout()
 
+        control_label: QLabel = get_label('CONTROL', 22)
+        control_label.setMargin(15)
+
         # Volt section
-        volt_label: QLabel = get_label('Voltage', 24)
+        volt_label: QLabel = get_label('Volts', 20)
         volt_layout = QHBoxLayout()
         self.volt_dial = QDial()
-        self.volt_dial.setMinimumWidth(200)
+        self.volt_dial.setMinimumWidth(100)
         self.volt_dial.notchesVisible = True
         self.volt_dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.volt_input: QLineEdit = get_lineedit('0.00', 18, 4, Qt.FocusPolicy.StrongFocus)
+        self.volt_input.setMaximumWidth(100)
         volt_unit_label: QLabel = get_label('V', 22)
 
         volt_layout.addWidget(self.volt_dial)
@@ -100,16 +105,18 @@ class DPSMainWindow(QMainWindow):
         volt_layout.addWidget(volt_unit_label)
         self.volt_setbutton = QPushButton('Set')
         self.volt_setbutton.setMaximumWidth(100)
+        self.volt_setbutton
 
         # Amp section
-        amp_label: QLabel = get_label('Current', 24)
+        amp_label: QLabel = get_label('Amps', 20)
         amp_layout = QHBoxLayout()
         self.amp_dial = QDial()
-        self.amp_dial.setMinimumWidth(200)
+        self.amp_dial.setMinimumWidth(100)
         self.amp_dial.notchesVisible = True
         self.amp_dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.amp_input: QLineEdit = get_lineedit('0.000', 18, 5, Qt.FocusPolicy.StrongFocus)
-        amp_unit_label: QLabel = get_label('V', 22)
+        self.amp_input.setMaximumWidth(100)
+        amp_unit_label: QLabel = get_label('A', 22)
 
         amp_layout.addWidget(self.amp_dial)
         amp_layout.addWidget(self.amp_input)
@@ -117,6 +124,7 @@ class DPSMainWindow(QMainWindow):
         self.amp_setbutton = QPushButton('Set')
         self.amp_setbutton.setMaximumWidth(100)
 
+        layout.addWidget(control_label)
         layout.addWidget(volt_label)
         layout.addLayout(volt_layout)
         layout.addWidget(self.volt_setbutton)
@@ -128,6 +136,9 @@ class DPSMainWindow(QMainWindow):
 
     def __get_output_panel(self) -> QVBoxLayout:
         layout: QVBoxLayout = QVBoxLayout()
+
+        output_label: QLabel = get_label('OUTPUT', 22)
+        output_label.setMargin(15)
 
         # Stylesheet change for out values
         editstyle = (
@@ -184,7 +195,10 @@ class DPSMainWindow(QMainWindow):
         pout_hbox.addWidget(pout_edit)
         pout_hbox.addWidget(pout_unit_label)
 
+        self.button_onoff: QPushButton = QPushButton('Power')
+
         # Pack stuff into layout
+        layout.addWidget(output_label)
         layout.addWidget(vin_label)
         layout.addLayout(vin_hbox)
         layout.addWidget(vout_label)
@@ -193,6 +207,9 @@ class DPSMainWindow(QMainWindow):
         layout.addLayout(aout_hbox)
         layout.addWidget(pout_label)
         layout.addLayout(pout_hbox)
+        layout.addWidget(QHLine())
+        layout.addWidget(self.button_onoff)
+
 
         return layout
 
