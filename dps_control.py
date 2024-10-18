@@ -2,7 +2,7 @@
 
 import time
 import minimalmodbus
-from enum import Enum
+from enum import IntEnum
 from serial import SerialException
 from minimalmodbus import ModbusException
 import dps_config as conf
@@ -18,11 +18,11 @@ minimalmodbus.CLOSE_PORT_AFTER_EACH_CALL = False
 instrument = None
 DEBUG = True
 
-class ValueType(Enum):
+class ValueType(IntEnum):
     INT = 1
     FLOAT = 2
 
-class Register(Enum):
+class Register(IntEnum):
     VOLTS = 0x0
     AMPS = 0x1
 
@@ -51,33 +51,24 @@ def decode_modbus_status_response(b):
 
 # Set device voltage
 def set_voltage(volts):
-
     if (volts > conf.max_voltage or volts < conf.min_voltage):
         print("Voltage must be between %d and %d" % (conf.min_voltage, conf.max_voltage))
         return
-    try:
-        instrument.write_register(Register.VOLTS, value=volts, numberOfDecimals=2)
-    except (TypeError, ValueError, ModbusException, SerialException) as error:
-        print(error)
+    instrument.write_register(Register.VOLTS, value=volts, number_of_decimals=2)
+
 
 # Set device current
 def set_current(amps):
     if (amps > conf.max_current or amps < conf.min_current):
         print("Current must be between %d and %d" % (conf.min_current, conf.max_current))
         return
-    try:
-        instrument.write_register(Register.AMPS, value=amps, numberOfDecimals=3)
-    except (TypeError, ValueError, ModbusException, SerialException) as error:
-        print(error)
+    instrument.write_register(Register.AMPS, value=amps, number_of_decimals=3)
 
 # Read registers for status
 def read_registers():
-    try:
-        registers = instrument.read_registers(registeraddress=0x0, number_of_registers=20)
-        return registers
-    except (TypeError, ValueError, ModbusException, SerialException) as error:
-        print(error)
-    return []
+    registers = instrument.read_registers(registeraddress=0x0, number_of_registers=20)
+    return registers
+
 
 # Print command prompt and return input
 def commandPrompt():
@@ -147,6 +138,7 @@ def parseCommand(cmd):
         return ret
     except (TypeError, ValueError, ModbusException, SerialException) as error:
         print(error)
+        return True
 
 
 
