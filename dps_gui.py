@@ -60,9 +60,9 @@ class DPSMainWindow(QMainWindow):
         super().__init__()
         self.setWindowTitle('DPS Controller')
         self.setMinimumSize(800, 600)
-        self.log_pane = None
+        self.log_pane = QPlainTextEdit()
 
-    # Private methods
+    # Private UI setup methods
     def __get_setup_panel(self) -> QVBoxLayout:
         """This is the leftmost panel containing setup items"""
         layout = QVBoxLayout()
@@ -141,6 +141,7 @@ class DPSMainWindow(QMainWindow):
         amp_layout.addWidget(amp_unit_label)
         self.setbutton: QPushButton = get_button('Set')
         self.setbutton.setMaximumWidth(100)
+        self.setbutton.clicked.connect(self.__set_output_values)
 
         layout.addWidget(QHLine())
         layout.addWidget(volt_label)
@@ -263,7 +264,6 @@ class DPSMainWindow(QMainWindow):
     def __get_log_layout(self) -> QHBoxLayout:
         """This is the (usually) bottom part of the screen for log info"""
         layout = QHBoxLayout()
-        self.log_pane = QPlainTextEdit()
         self.log_pane.setReadOnly(True)
         self.log_pane.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self.log_pane.setFont(DEFAULT_FONT)
@@ -279,6 +279,13 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(cliLabel)
         layout.addWidget(cli_input)
         return layout
+
+    # Private functional methods
+    def __set_output_values(self) -> None:
+        """Handle settings volts and amps from UI"""
+        cmd: str = f'va {self.volt_input.text()} {self.amp_input.text()}'
+        self.log(f'Set output: {self.volt_input.text()} V {self.amp_input.text()} A')
+        self.log(cmd)
 
     # Public methods
     def setup(self) -> None:
