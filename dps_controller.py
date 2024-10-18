@@ -78,6 +78,14 @@ class DPSController:
             f"Connected:\t{st.connected}\nPort:\t\t{st.port}\nSlave:\t\t{st.slave}",
         )
 
+    def get_connected(self) -> bool:
+        """Get connected status"""
+        return self.dps_state.connected
+
+    def get_power_state(self) -> bool:
+        """Get output power status"""
+        return self.dps_state.onoff
+
     def __event_provider(self) -> None:
         """Event provider thread filling up the event queue"""
         global STOP_EVENTS
