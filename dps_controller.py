@@ -13,6 +13,7 @@ Connect:                    c [<port>]
 Set port:                   p <port>
 Set voltage:                v <float>
 Set current:                a <float>
+Set voltage and current     va <float> <float>
 Info:                       i
 Power set/toggle ON/OFF:    x [0/1]
 Monitor toggle ON/OFF:      m
@@ -65,8 +66,8 @@ class DPSController:
 
     def connect(self) -> tuple[bool, str]:
         """Start controller, connect to device"""
-        conn: tuple[bool, str] = self.engine.connect(self.status.port, self.status.slave, self.status.baudrate)
-        if not conn[0]:
+        conn, msg = self.engine.connect(self.status.port, self.status.slave, self.status.baudrate)
+        if not conn:
             return False, "ERROR: Cannot connect to DPS device."
 
         self.status.connected = True
@@ -179,8 +180,8 @@ class DPSController:
     def __handle_set_volts(self, args) -> tuple[bool, str]:
         """Function to handle set volts command"""
         if validate_float(args):
-            ret: tuple[bool, str] = self.engine.set_volts(float(args))
-            if not ret[0]:
+            ret, msg = self.engine.set_volts(float(args))
+            if not ret:
                 return (False, 'Set volts failed')
             return (True, 'Success')
 
@@ -191,16 +192,16 @@ class DPSController:
         volts: str = args[0]
         amps: str = args[1]
         if validate_float(volts) and validate_float(amps):
-            ret: tuple[bool, str] = self.engine.set_volts_and_amps(float(volts), float(amps))
-            if not ret[0]:
+            ret, msg = self.engine.set_volts_and_amps(float(volts), float(amps))
+            if not ret:
                 return (False, 'Set volts failed')
             return (True, 'Success')
 
     def __handle_set_amps(self, args) -> tuple[bool, str]:
         """Function to handle set amps command"""
         if validate_float(args):
-            ret: tuple[bool, str] = self.engine.set_amps(float(args))
-            if not ret[0]:
+            ret, str = self.engine.set_amps(float(args))
+            if not ret:
                 return (False, 'Set amps failed')
             return (True, 'Success')
 
