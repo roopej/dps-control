@@ -140,7 +140,7 @@ class DPSEngine:
         return reg
 
     # Private methods
-    # Communication through Modbus, catch exceptions on these, used internally by class
+    # Communication through Modbus, catch exceptions on these (TODO), used internally by class
     def __write_register(self, address: int, value: Union[int,float], num_decimals: int) -> None:
         """Write single register at at address"""
         self.instrument.write_register(address, value=value, number_of_decimals=num_decimals)

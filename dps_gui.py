@@ -112,21 +112,21 @@ class DPSMainWindow(QMainWindow):
 
         # Dials for Volts and Amps
         va_dial_layout = QHBoxLayout()
-        self.volt_control = dialbar.DialBar('V', 4)
-        self.volt_control.setObjectName('volt_control')
-        self.amp_control = dialbar.DialBar('A', 5)
-        self.amp_control.setObjectName('amp_control')
-        self.volt_control.set_range(0.0, 3.0)
-        self.amp_control.set_range(0,5)
+        volt_control = dialbar.DialBar('V', 4)
+        volt_control.setObjectName('volt_control')
+        amp_control = dialbar.DialBar('A', 5)
+        amp_control.setObjectName('amp_control')
+        volt_control.set_range(0.0, 3.0)
+        amp_control.set_range(0,5)
 
         # Connect change signals
-        self.volt_control.valuesChanged.connect(self.__controls_changed)
-        self.amp_control.valuesChanged.connect(self.__controls_changed)
+        volt_control.valuesChanged.connect(self.__controls_changed)
+        amp_control.valuesChanged.connect(self.__controls_changed)
 
         # Add to layout
-        va_dial_layout.addWidget(self.volt_control)
+        va_dial_layout.addWidget(volt_control)
         va_dial_layout.addStretch()
-        va_dial_layout.addWidget(self.amp_control)
+        va_dial_layout.addWidget(amp_control)
 
         # Button to commit values
         self.button_set: QPushButton = button_factory('Set')
@@ -310,8 +310,10 @@ class DPSMainWindow(QMainWindow):
             #  * Set connected LED accordingly
             #  * No disconnect option necessary
         elif sender_name == 'button_set':
-            vstr = self.volt_control.get_value()
-            astr = self.amp_control.get_value()
+            vcontrol = self.findChild(dialbar.DialBar, name = 'volt_control')
+            acontrol = self.findChild(dialbar.DialBar, name = 'amp_control')
+            vstr = vcontrol.get_value()
+            astr = acontrol.get_value()
             cmd: str = f'va {vstr} {astr}'
             self.log(f'Set output: {vstr} V {astr} A')
             # TODO:
