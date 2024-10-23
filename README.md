@@ -25,9 +25,11 @@ check `sudo dmesg` log which shows you where it mounted the device.
 If you get permission errors about your tty port it might be that your user needs to be added to the `dialout` group.
 `sudo usermod -aG dialout $(whoami)`
 
-## macOS
+### macOS
+TBD
 
 ### Windows
+TBD
 
 ## Running
 
