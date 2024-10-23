@@ -39,9 +39,9 @@ class DPSController:
         self.status: DPSStatus = DPSStatus()
         self.status.port = conf['connection']['tty_port']
         self.status.slave = conf['connection']['slave']
-        self.status.baudrate = conf['connection']['baud_rate']
+        self.status.baud_rate = conf['connection']['baud_rate']
         self.event_queue: SimpleQueue = events
-        self.event_thread : threading.Thread = None
+        self.event_thread : threading.Thread or None = None
 
 
 
@@ -63,7 +63,7 @@ class DPSController:
         """Get slave number as string"""
         return str(self.status.slave)
 
-    def get_baudrate(self) -> str:
+    def get_baud_rate(self) -> str:
         """Get baud rate as string"""
         return str(self.status.baudrate)
 
@@ -122,7 +122,7 @@ class DPSController:
         self.event_thread.start()
 
     @staticmethod
-    def stop_events(self) -> None:
+    def stop_events() -> None:
         """Stop producing events"""
         global STOP_EVENTS
         STOP_EVENTS = True
@@ -212,7 +212,7 @@ class DPSController:
                 return False, 'Set amps failed'
             return True, 'Success'
 
-    def __get_cmd_and_validate(self, cmd: str) -> tuple[Callable, str, bool]:
+    def __get_cmd_and_validate(self, cmd: str) -> tuple[Callable or None, str, bool]:
         """Get command handler and validate args"""
         main_cmd = cmd.split()[0].lower()
 
@@ -233,7 +233,7 @@ class DPSController:
         elif main_cmd == 'a':
             return self.__handle_set_amps, args, True
         elif main_cmd == 'i':
-            return self.__handle_info, True
+            return self.__handle_info, args, True
         elif main_cmd == 'x':
             return self.__handle_power_switch, args, True
         else:
