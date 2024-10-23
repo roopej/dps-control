@@ -3,12 +3,15 @@ DPSEngine module communicates with DPS power supply device through
 Modbus protocol
 """
 
-from typing import List, Union, Dict
+from typing import List, Union
 import minimalmodbus
 from minimalmodbus import ModbusException
 from serial import SerialException
 from enum import IntEnum
 from dps_status import DPSRegisters
+
+# Converters from int -> float
+from utils import iampsf, ivoltsf, iwattsf
 
 class DPSRegister(IntEnum):
     """Register addresses of DPS5005"""
@@ -28,121 +31,121 @@ class DPSEngine:
         self.instrument = None
         self.debug: bool = debug
 
-    def connect(self, port: str, slave: int, baudrate: int) -> tuple[bool, str]:
+    def connect(self, port: str, slave: int, baud_rate: int) -> tuple[bool, str]:
         """Connect to DPS through modbus"""
         try:
             self.instrument = minimalmodbus.Instrument(port, slave)
-        except SerialException as error:
+        except (SerialException, ModbusException) as error:
             print(error)
-            return (False, 'Serial exception')
+            return False, 'Serial exception'
 
-        self.instrument.serial.baudrate = baudrate
+        self.instrument.serial.baud_rate = baud_rate
         self.instrument.serial.bytesize = 8
         self.instrument.serial.timeout = 0.5
         self.instrument.mode = minimalmodbus.MODE_RTU
         self.instrument.close_port_after_each_call = False
         self.instrument.debug = self.debug
         self.set_power(False)
-        return (True, '')
+        return True, ''
 
     # Getters and setters
     def set_power(self, enable: bool) -> tuple[bool, str]:
         """Set current power ON/OFF status"""
         self.__write_register(DPSRegister.PWR_ONOFF, int(enable), 0)
-        return (True, '')
+        return True, ''
 
     def get_power_status(self) -> tuple[bool, int]:
         """Get current power ON/OFF status"""
-        return (True, self.get_registers().onoff)
+        return True, self.get_registers().onoff
 
     def toggle_power(self) -> tuple[bool, str]:
         """Toggle power ON<->OFF"""
         current_status: tuple[bool, int] = self.get_power_status()
         toggle: bool = bool(current_status[1])
         self.set_power(not toggle)
-        return (True, '')
+        return True, ''
 
     def set_volts(self, volts: float) -> tuple[bool, str]:
         """Set voltage of DPS device"""
         #TODO: Limit check
         self.__write_register(DPSRegister.VOLTS_SET, volts, 2)
-        return (True, '')
+        return True, ''
 
     def get_volts_set(self) -> tuple[bool, float]:
         """Get set value of volts out, not necessary the actual out voltage atm"""
-        return (True, self.get_registers().u_set / 100.0)
+        return True, ivoltsf(self.get_registers().u_set)
 
     def get_volts_out(self) -> tuple[bool, float]:
         """Get voltage output at the moment"""
-        return (True, self.get_registers().u_out / 100.0)
+        return True, ivoltsf(self.get_registers().u_out)
 
     def set_amps(self, amps: float) -> tuple[bool, str]:
         """Set current of DPS device"""
         #TODO: Limit check
         self.__write_register(DPSRegister.AMPS_SET, amps, 3)
-        return (True, '')
+        return True, ''
 
     def get_amps_set(self) -> tuple[bool, float]:
         """Get set value of amps out, not necessary the actual out current atm"""
-        return (True, self.get_registers().i_set / 1000.0)
+        return True, iampsf(self.get_registers().i_set)
 
     def get_amps_out(self) -> tuple[bool, float]:
         """Get current output at the moment"""
-        return (True, self.get_registers().i_out / 1000.0)
+        return True, iampsf(self.get_registers().i_out)
 
     def set_volts_and_amps(self, volts: float, amps: float) -> tuple[bool, str]:
         """Set voltage and amps in single write"""
         #TODO: Limit check
         values: List[int] = [int(volts*100), int(amps*1000)]
         self.__write_registers(DPSRegister.VOLTS_SET, values)
-        return (True, '')
+        return True, ''
 
     def get_power_out(self) -> tuple[bool, float]:
         """Get current power output"""
-        return (True, self.get_registers().p_out / 100.0)
+        return True, iwattsf(self.get_registers().p_out)
 
     def get_printable_status(self) -> tuple[bool, str]:
         """Get dump of status variables of DPS"""
         # TODO: Move to DPSStatus() __repr__ __str__?
-        retstr = str()
-        retstr += f'U-Set:\t\t{self.registers[0] / 100.0}\n'
-        retstr += f'I-Set:\t\t{self.registers[1] / 1000.0}\n'
-        retstr += f'U-Out:\t\t{self.registers[2] / 100.0}\n'
-        retstr += f'I-Out:\t\t{self.registers[3] / 1000.0}\n'
-        retstr += f'P-Out:\t\t{self.registers[4] / 100.0}\n'
-        retstr += f'U-In:\t\t{self.registers[5] / 100.0}\n'
-        retstr += f'Locked:\t\t{self.registers[6]}\n'
-        retstr += f'Protected:\t{self.registers[7]}\n'
-        retstr += f'CV/CC:\t\t{self.registers[8]}\n'
-        retstr += f'ONOFF:\t\t{self.registers[9]}\n'
-        retstr += f'Backlight:\t{self.registers[10]}\n'
-        retstr += f'Model:\t\t{self.registers[11]}\n'
-        retstr += f'Firmware:\t{self.registers[12] / 10.0}\n'
-        return (True, retstr)
+        ret_str = str()
+        ret_str += f'U-Set:\t\t{self.registers.u_set / 100.0}\n'
+        ret_str += f'I-Set:\t\t{self.registers.i_set / 1000.0}\n'
+        ret_str += f'U-Out:\t\t{self.registers.u_out / 100.0}\n'
+        ret_str += f'I-Out:\t\t{self.registers.i_out / 1000.0}\n'
+        ret_str += f'P-Out:\t\t{self.registers.p_out / 100.0}\n'
+        ret_str += f'U-In:\t\t{self.registers.u_in / 100.0}\n'
+        ret_str += f'Locked:\t\t{self.registers.lock}\n'
+        ret_str += f'Protected:\t{self.registers.protect}\n'
+        ret_str += f'CV/CC:\t\t{self.registers.cvcc}\n'
+        ret_str += f'ONOFF:\t\t{self.registers.onoff}\n'
+        ret_str += f'Backlight:\t{self.registers.b_led}\n'
+        ret_str += f'Model:\t\t{self.registers.model}\n'
+        ret_str += f'Firmware:\t{self.registers.version / 10.0}\n'
+        return True, ret_str
 
-    def get_registers(self) -> DPSRegisters:
+    def get_registers(self) -> DPSRegisters or None:
         """Get status registers from DPS device, updates self.registers to current values"""
-        reglist: Lis[int] = self.__read_registers(0x0, 20)
-        if len(registers != 20):
+        reg_list: List[int] = self.__read_registers(0x0, 20)
+        if len(reg_list) != 20:
             return None
         reg: DPSRegisters = self.registers
-        reg.u_set = reglist[0]
-        reg.i_set = reglist[1]
-        reg.u_out = reglist[2]
-        reg.i_out = reglist[3]
-        reg.p_out = reglist[4]
-        reg.u_in = reglist[5]
-        reg.lock = reglist[6]
-        reg.protect = reglist[7]
-        reg.cvcc = reglist[8]
-        reg.model = reglist[9]
-        reg.version = reglist[10]
+        reg.u_set = reg_list[0]
+        reg.i_set = reg_list[1]
+        reg.u_out = reg_list[2]
+        reg.i_out = reg_list[3]
+        reg.p_out = reg_list[4]
+        reg.u_in = reg_list[5]
+        reg.lock = reg_list[6]
+        reg.protect = reg_list[7]
+        reg.cvcc = reg_list[8]
+        reg.model = reg_list[9]
+        reg.version = reg_list[10]
         return reg
 
     # Private methods
     # Communication through Modbus, catch exceptions on these (TODO), used internally by class
     def __write_register(self, address: int, value: Union[int,float], num_decimals: int) -> None:
-        """Write single register at at address"""
+        """Write single register at address"""
         self.instrument.write_register(address, value=value, number_of_decimals=num_decimals)
 
     def __write_registers(self, address: int, values: List[int]) -> None:

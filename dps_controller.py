@@ -35,13 +35,15 @@ VERSION: str = '0.2'
 
 class DPSController:
     """Handles logic and parsing commands"""
-    def __init__(self, port: str, slave: str, baudrate: str, events: SimpleQueue = None) -> None:
+    def __init__(self, conf, events: SimpleQueue = None) -> None:
         self.status: DPSStatus = DPSStatus()
-        self.status.port = port
-        self.status.slave = int(slave)
-        self.status.baudrate = int(baudrate)
+        self.status.port = conf['connection']['tty_port']
+        self.status.slave = conf['connection']['slave']
+        self.status.baudrate = conf['connection']['baud_rate']
         self.event_queue: SimpleQueue = events
         self.event_thread : threading.Thread = None
+
+
 
         # Instance to talk to DPS device through Modbus
         self.engine = DPSEngine(debug = False)

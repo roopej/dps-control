@@ -68,3 +68,15 @@ def validate_int(value: str) -> bool:
         return True
     except ValueError:
         return False
+
+def ivoltsf(value: int) -> float:
+    """Convert volts from int to float, scaling"""
+    return value / 100.0
+
+def iampsf(value: int) -> float:
+    """Convert amps from int to float, scaling"""
+    return value / 1000.0
+
+def iwattsf(value: int) -> float:
+    """Convert watts from int to float, scaling"""
+    return value / 100.0
