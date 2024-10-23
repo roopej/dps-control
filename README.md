@@ -8,7 +8,7 @@ device is handled by the simple minimalmodbus library.
 
 ## Configuration
 
-Please check first `dps_controller.cfg` file. It has very few settings but they are important as you need to tell the 
+Please check first `dps_control.cfg` file. It has very few settings but they are important as you need to tell the 
 CLI in which tty port your DPS5005 device is and what its slave number is. In Ubuntu the port is usually `/dev/ttyUSB0`
 or `/dev/ttyUSB1` or similar. If you do not know which port your device is in, you can plug it in and 
 check `sudo dmesg` log which shows you where it mounted the device. Configuration file also includes setting for used 
