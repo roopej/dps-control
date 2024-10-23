@@ -7,21 +7,27 @@ There should be no problem to run it on macOS and maybe even Windows is possible
 device is handled by the simple minimalmodbus library.
 
 ## Configuration
-
+### General
 Please check first `dps_control.cfg` file. It has very few settings but they are important as you need to tell the 
-CLI in which tty port your DPS5005 device is and what its slave number is. In Ubuntu the port is usually `/dev/ttyUSB0`
-or `/dev/ttyUSB1` or similar. If you do not know which port your device is in, you can plug it in and 
-check `sudo dmesg` log which shows you where it mounted the device. Configuration file also includes setting for used 
+CLI in which tty port your DPS5005 device is and what its slave number is.  Configuration file also includes setting for used 
 baud rate. It is *highly recommended* to use 9600 as other values may not work properly.
 
 Also, please set the maximum voltage and current according to your power supply specs.
 
-If you get permission errors about your tty port it might be that your user needs to be added to the `dialout` group.
-
-`sudo usermod -aG dialout $(whoami)`
-
 There is setting `start_power_off` which is True by default. This ensures that starting the dps-control application
 first switches power off for safety reasons.
+
+### Linux
+In Ubuntu the port is usually `/dev/ttyUSB0`
+or `/dev/ttyUSB1` or similar. If you do not know which port your device is in, you can plug it in and 
+check `sudo dmesg` log which shows you where it mounted the device.
+
+If you get permission errors about your tty port it might be that your user needs to be added to the `dialout` group.
+`sudo usermod -aG dialout $(whoami)`
+
+## macOS
+
+### Windows
 
 ## Running
 
