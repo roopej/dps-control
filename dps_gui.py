@@ -357,6 +357,7 @@ class DPSMainWindow(QMainWindow):
             try:
                 data = self.controller.event_queue.get(True, 2)
                 print(data)
+                self.__update_status(data)
             except queue.Empty as error:
                 print('Waiting more...')
             finally:
@@ -385,13 +386,13 @@ class DPSMainWindow(QMainWindow):
         # Set up event handling from controller
         print('Starting event thread')
         self.thread_manager = QThreadPool()
+        self.__running = True
         self.thread_manager.start(self.__handle_events)
 
         # Central widget
         centralWidget = QWidget()
         centralWidget.setLayout(mainVLayout)
         self.setCentralWidget(centralWidget)
-        self.__running = True
 
     def log(self, txt: str) -> None:
         """Append log message to log panel"""

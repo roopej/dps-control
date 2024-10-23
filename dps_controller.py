@@ -46,6 +46,7 @@ class DPSController:
         # Instance to talk to DPS device through Modbus
         self.engine = DPSEngine(debug = False)
         self.version: str = VERSION
+        self.start_events()
 
     @staticmethod
     def get_version() -> str:
@@ -71,6 +72,7 @@ class DPSController:
             return False, "ERROR: Cannot connect to DPS device."
 
         self.status.connected = True
+        self.start_events()
         return True, "Connection successful"
 
     # def get_state(self) -> tuple[bool, str]:
@@ -88,7 +90,7 @@ class DPSController:
         """Get connected status"""
         return self.status.connected
 
-    def get_power_state(self) -> bool:
+    def get_power_state(self) -> int:
         """Get output power status"""
         return self.status.registers.onoff
 
@@ -103,18 +105,21 @@ class DPSController:
         global STOP_EVENTS
         STOP_EVENTS = False
         running = True
+        stat: DPSStatus = DPSStatus()
+        stat.registers.u_out = 900
         while running:
             #registers : dict[str, any] = self.engine.get_status()
-            #self.event_queue.put_nowait(registers)
+            self.event_queue.put_nowait(stat)
             if STOP_EVENTS:
                 running = False
             sleep(1)
 
     def start_events(self) -> None:
         """Start a thread providing events from DPS"""
-        self.event_thread = threading.Thread(target=self.__event_provider, args=())
+        self.event_thread = threading.Thread(target=self.__event_provider, args=(), daemon=True)
         self.event_thread.start()
 
+    @staticmethod
     def stop_events(self) -> None:
         """Stop producing events"""
         global STOP_EVENTS
@@ -125,7 +130,7 @@ class DPSController:
 
         # Special case for quitting program
         if cmd == 'q':
-            return (True, 'Quit requested')
+            return True, 'Quit requested'
 
         # Tuple containing handler information
         execute: tuple[Callable, str, bool] = self.__get_cmd_and_validate(cmd)
@@ -139,7 +144,7 @@ class DPSController:
 
         # If no callback was parsed
         if execute[0] is None:
-            return (False, 'Invalid command')
+            return False, 'Invalid command'
 
         # Execute
         return execute[0](execute[1])
@@ -148,12 +153,12 @@ class DPSController:
     def __handle_connect(self, cmd) -> tuple[bool, str]:
         """Handle connect command"""
         if self.status.connected:
-            return (False, 'Already connected')
+            return False, 'Already connected'
         if len(cmd):
             self.status.port = cmd
         return self.connect()
 
-    def __handle_info(self, cmd) -> tuple[bool, str]:
+    def __handle_info(self) -> tuple[bool, str]:
         """Handle info command"""
         return self.engine.get_printable_status()
 
@@ -168,42 +173,42 @@ class DPSController:
         self.engine.set_power(switchto)
         self.status.registers.onoff = switchto
         pwr = 'ON' if switchto is True else 'OFF'
-        return (True, f'Power switched {pwr}')
+        return True, f'Power switched {pwr}'
 
     def __handle_set_port(self, port) -> tuple[bool, str]:
         """Handle set port"""
         if len(port) == 0:
-            return (False, 'Port argument is required')
+            return False, 'Port argument is required'
         self.status.port = port
-        return (True, f'Port set to {port}')
+        return True, f'Port set to {port}'
 
     def __handle_set_volts(self, args) -> tuple[bool, str]:
         """Function to handle set volts command"""
-        if validate_float(args):
+        if utils.validate_float(args):
             ret, msg = self.engine.set_volts(float(args))
             if not ret:
-                return (False, 'Set volts failed')
-            return (True, 'Success')
+                return False, 'Set volts failed'
+            return True, 'Success'
 
     def __handle_set_volts_and_amps(self, args) -> tuple[bool, str]:
         """Function to handle set volts command"""
         if len(args.split() < 2):
-            return (False, 'Invalid values')
+            return False, 'Invalid values'
         volts: str = args[0]
         amps: str = args[1]
-        if validate_float(volts) and validate_float(amps):
+        if utils.validate_float(volts) and utils.validate_float(amps):
             ret, msg = self.engine.set_volts_and_amps(float(volts), float(amps))
             if not ret:
-                return (False, 'Set volts failed')
-            return (True, 'Success')
+                return False, 'Set volts failed'
+            return True, 'Success'
 
     def __handle_set_amps(self, args) -> tuple[bool, str]:
         """Function to handle set amps command"""
-        if validate_float(args):
-            ret, str = self.engine.set_amps(float(args))
+        if utils.validate_float(args):
+            ret, msg = self.engine.set_amps(float(args))
             if not ret:
-                return (False, 'Set amps failed')
-            return (True, 'Success')
+                return False, 'Set amps failed'
+            return True, 'Success'
 
     def __get_cmd_and_validate(self, cmd: str) -> tuple[Callable, str, bool]:
         """Get command handler and validate args"""
@@ -216,18 +221,18 @@ class DPSController:
 
         # Commands to handle (handler, arguments, connection_required)
         if main_cmd == 'c':
-            return (self.__handle_connect, args, False)
+            return self.__handle_connect, args, False
         elif main_cmd == 'p':
-            return (self.__handle_set_port, args, False)
+            return self.__handle_set_port, args, False
         elif main_cmd == 'v':
-            return (self.__handle_set_volts, args, True)
+            return self.__handle_set_volts, args, True
         elif main_cmd == 'va':
-            return (self.__handle_set_volts_and_amps, args, True)
+            return self.__handle_set_volts_and_amps, args, True
         elif main_cmd == 'a':
-            return (self.__handle_set_amps, args, True)
+            return self.__handle_set_amps, args, True
         elif main_cmd == 'i':
-            return (self.__handle_info, args, True)
+            return self.__handle_info, True
         elif main_cmd == 'x':
-            return (self.__handle_power_switch, args, True)
+            return self.__handle_power_switch, args, True
         else:
-            return (None, '', False)
+            return None, '', False
