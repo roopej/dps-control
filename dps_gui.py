@@ -299,7 +299,7 @@ class DPSMainWindow(QMainWindow):
 
     # Private functional methods
     def __handle_buttons(self) -> None:
-        """Handle button presses from UI"""
+        """Handle button presses from UI, form command for controller"""
         cmd: str = str()
         self.log(cmd)
         sender = self.sender()
@@ -313,15 +313,12 @@ class DPSMainWindow(QMainWindow):
                 self.log('Switching power OFF')
             # TODO:
             #  * Warn about initial settings?
-            #  * Send command here
             #  * Check that power is actually on
             #  * Set toggle button status accordingly
         elif sender_name == 'button_connect':
             self.log('Connecting')
-            #cmd: str = f'c {port}'
-            #self.log(f'Set output: {vstr} V {astr} A')
+            cmd: str = f'c {self.controller.status.port}'
             # TODO:
-            #  * Send command here
             #  * Check if connection was successful
             #  * Set connected LED accordingly
             #  * No disconnect option necessary
@@ -333,9 +330,10 @@ class DPSMainWindow(QMainWindow):
             cmd: str = f'va {vstr} {astr}'
             self.log(f'Set output: {vstr} V {astr} A')
             # TODO:
-            #  * Send command here
             #  * Check minimum and maximum limits and cancel if necessary
             sender.setEnabled(False)
+        # Send command
+        self.controller.parse_command(cmd)
 
     def __update_status(self, status: DPSStatus):
         """Update UI according to status information"""

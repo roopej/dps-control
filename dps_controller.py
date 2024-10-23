@@ -127,7 +127,7 @@ class DPSController:
 
     def parse_command(self, cmd: str) -> tuple[bool, str]:
         """Parse input command and act upon it. Return false if quit requested"""
-
+        print(f'Parser got: {cmd}')
         # Special case for quitting program
         if cmd == 'q':
             return True, 'Quit requested'
