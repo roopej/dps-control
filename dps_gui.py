@@ -1,15 +1,23 @@
 """DPS-Control GUI"""
+import queue
+
 from PySide6.QtWidgets import *
-from PySide6.QtCore import Qt, QFile, QTextStream
+from PySide6.QtCore import Qt, QFile, QTextStream, QThreadPool, Slot
 from PySide6.QtGui import QFont, QPalette, QColor
+from threading import Thread
 import sys
 import breeze_pyside6
 from custom_widgets import dialbar, statusindicator, togglebutton
 from dps_controller import DPSController
+from dps_status import DPSStatus
 from custom_widgets.togglebutton import ToggleButton
 from utils import button_factory, get_label, get_lineedit
 
 DEFAULT_FONT = 'Arial'
+VOUT_NAME = 'volts_out'
+AOUT_NAME = 'amps_out'
+POUT_NAME = 'power_out'
+VIN_NAME = 'volts_in'
 
 class QVLine(QFrame):
     def __init__(self) -> None:
@@ -34,6 +42,7 @@ class DPSMainWindow(QMainWindow):
         self.setMinimumSize(800, 600)
         self.log_pane = QPlainTextEdit()
         self.controller = controller
+        self.__running = False
 
     # Private UI setup methods
     def __get_setup_panel(self) -> QVBoxLayout:
@@ -164,6 +173,7 @@ class DPSMainWindow(QMainWindow):
         volt_out_edit.setStyleSheet(editstyle)
         volt_out_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
         volt_out_edit.setMaximumWidth(100)
+        volt_out_edit.setObjectName(VOUT_NAME)
         volt_out_unit_label: QLabel = get_label('V', label_size)
         volt_out_unit_label.setMargin(7)
         volt_out_hbox.addWidget(volt_out_edit)
@@ -175,6 +185,7 @@ class DPSMainWindow(QMainWindow):
         amp_out_edit.setStyleSheet(editstyle)
         amp_out_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
         amp_out_edit.setMaximumWidth(100)
+        amp_out_edit.setObjectName(AOUT_NAME)
         amp_out_unit_label: QLabel = get_label('A', label_size)
         amp_out_unit_label.setMargin(7)
         amp_out_hbox.addWidget(amp_out_edit)
@@ -186,6 +197,7 @@ class DPSMainWindow(QMainWindow):
         power_out_edit.setStyleSheet(editstyle)
         power_out_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
         power_out_edit.setMaximumWidth(100)
+        power_out_edit.setObjectName(POUT_NAME)
         power_out_unit_label: QLabel = get_label('W', label_size)
         power_out_unit_label.setMargin(3)
         power_out_hbox.addWidget(power_out_edit)
@@ -197,6 +209,7 @@ class DPSMainWindow(QMainWindow):
         volt_in_edit.setStyleSheet(editstyle)
         volt_in_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
         volt_in_edit.setMaximumWidth(100)
+        volt_in_edit.setObjectName(VIN_NAME)
         volt_in_unit_label: QLabel = get_label('V', label_size)
         volt_in_unit_label.setMargin(7)
         volt_in_hbox.addWidget(volt_in_edit)
@@ -281,6 +294,9 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(cli_input)
         return layout
 
+    def closeEvent(self, event):
+        self.__running = False
+
     # Private functional methods
     def __handle_buttons(self) -> None:
         """Handle button presses from UI"""
@@ -321,6 +337,31 @@ class DPSMainWindow(QMainWindow):
             #  * Check minimum and maximum limits and cancel if necessary
             sender.setEnabled(False)
 
+    def __update_status(self, status: DPSStatus):
+        """Update UI according to status information"""
+        vout = self.findChild(QLineEdit, VOUT_NAME)
+        aout = self.findChild(QLineEdit, AOUT_NAME)
+        pout = self.findChild(QLineEdit, POUT_NAME)
+        vin = self.findChild(QLineEdit, VIN_NAME)
+        vout.setText(str(status.registers.u_out))
+        aout.setText(str(status.registers.i_out))
+        pout.setText(str(status.registers.p_out))
+        vin.setText(str(status.registers.u_in))
+
+
+    @Slot()
+    def __handle_events(self):
+        """Handle event from controller, render status into GUI components"""
+        while self.__running:
+            print('Waiting for event to appear...')
+            try:
+                data = self.controller.event_queue.get(True, 2)
+                print(data)
+            except queue.Empty as error:
+                print('Waiting more...')
+            finally:
+                continue
+
     # Public methods
     def setup(self) -> None:
         """Setup UI"""
@@ -341,10 +382,16 @@ class DPSMainWindow(QMainWindow):
 
         mainVLayout.addLayout(cliHLayout, 1)
 
+        # Set up event handling from controller
+        print('Starting event thread')
+        self.thread_manager = QThreadPool()
+        self.thread_manager.start(self.__handle_events)
+
         # Central widget
         centralWidget = QWidget()
         centralWidget.setLayout(mainVLayout)
         self.setCentralWidget(centralWidget)
+        self.__running = True
 
     def log(self, txt: str) -> None:
         """Append log message to log panel"""
