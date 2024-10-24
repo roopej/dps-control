@@ -8,16 +8,20 @@ from threading import Thread
 import sys
 import breeze_pyside6
 from custom_widgets import dialbar, statusindicator, togglebutton
+from custom_widgets.statusindicator import StatusIndicator
 from dps_controller import DPSController
 from dps_status import DPSStatus
 from custom_widgets.togglebutton import ToggleButton
-from utils import button_factory, get_label, get_lineedit
+from utils import button_factory, get_label, get_lineedit, ivoltsf, iampsf, iwattsf
 
 DEFAULT_FONT = 'Arial'
 VOUT_NAME = 'volts_out'
 AOUT_NAME = 'amps_out'
 POUT_NAME = 'power_out'
 VIN_NAME = 'volts_in'
+CV_NAME = 'cv_indicator'
+CC_NAME = 'cc_indicator'
+CONN_NAME = 'conn_indicator'
 
 class QVLine(QFrame):
     def __init__(self) -> None:
@@ -72,6 +76,7 @@ class DPSMainWindow(QMainWindow):
         cv_label: QLabel = get_label('CV', 12)
         cv_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         cv_indicator = statusindicator.StatusIndicator(size = 20)
+        cv_indicator.setObjectName(CV_NAME)
         cv_hbox.addStretch()
         cv_hbox.addWidget(cv_label)
         cv_hbox.addWidget(cv_indicator)
@@ -80,6 +85,7 @@ class DPSMainWindow(QMainWindow):
         cc_label: QLabel = get_label('CC', 12)
         cc_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         cc_indicator = statusindicator.StatusIndicator(size = 20)
+        cc_indicator.setObjectName(CC_NAME)
         cc_hbox.addStretch()
         cc_hbox.addWidget(cc_label)
         cc_hbox.addWidget(cc_indicator)
@@ -88,6 +94,7 @@ class DPSMainWindow(QMainWindow):
         status_label = get_label('Connected', 12)
         status_label.setAlignment(Qt.AlignmentFlag.AlignVCenter)
         status_indicator = statusindicator.StatusIndicator(size = 20)
+        status_indicator.setObjectName(CONN_NAME)
         status_hbox.addStretch()
         status_hbox.addWidget(status_label)
         status_hbox.addWidget(status_indicator)
@@ -218,7 +225,7 @@ class DPSMainWindow(QMainWindow):
         self.button_onoff = button_factory('Power', toggle=True)
         self.button_onoff.setCheckable(True)
         self.button_onoff.setObjectName('button_onoff')
-        self.button_onoff.setEnabled(True)
+        self.button_onoff.setEnabled(False)
 
         self.button_set.setSizePolicy(
             QSizePolicy.MinimumExpanding,
@@ -318,6 +325,15 @@ class DPSMainWindow(QMainWindow):
         elif sender_name == 'button_connect':
             self.log('Connecting')
             cmd: str = f'c {self.controller.status.port}'
+
+            ret, msg = self.controller.parse_command(cmd)
+            # We are connected, light LED
+            if ret:
+                connected_ind = self.findChild(StatusIndicator, CONN_NAME)
+                connected_ind.setEnabled(True)
+            else:
+                self.log(msg)
+
             # TODO:
             #  * Check if connection was successful
             #  * Set connected LED accordingly
@@ -333,7 +349,7 @@ class DPSMainWindow(QMainWindow):
             #  * Check minimum and maximum limits and cancel if necessary
             sender.setEnabled(False)
         # Send command
-        self.controller.parse_command(cmd)
+        # self.controller.parse_command(cmd)
 
     def __update_status(self, status: DPSStatus):
         """Update UI according to status information"""
@@ -341,10 +357,24 @@ class DPSMainWindow(QMainWindow):
         aout = self.findChild(QLineEdit, AOUT_NAME)
         pout = self.findChild(QLineEdit, POUT_NAME)
         vin = self.findChild(QLineEdit, VIN_NAME)
-        vout.setText(str(status.registers.u_out))
-        aout.setText(str(status.registers.i_out))
-        pout.setText(str(status.registers.p_out))
-        vin.setText(str(status.registers.u_in))
+        cv = self.findChild(StatusIndicator, CV_NAME)
+        cc = self.findChild(StatusIndicator, CC_NAME)
+        vout.setText(str(ivoltsf(status.registers.u_out)))
+        aout.setText(str(iampsf(status.registers.i_out)))
+        pout.setText(str(iwattsf(status.registers.p_out)))
+        vin.setText(str(ivoltsf(status.registers.u_in)))
+
+        # Handle CV/CC indicator
+        if status.registers.cvcc == 0:
+            cv.setEnabled(True)
+            cc.setEnabled(False)
+        else:
+            cv.setEnabled(False)
+            cc.setEnabled(True)
+
+        self.update()
+
+
 
 
     @Slot()

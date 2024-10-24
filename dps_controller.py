@@ -44,7 +44,9 @@ class DPSController:
         # Instance to talk to DPS device through Modbus
         self.engine = DPSEngine(debug = False)
         self.version: str = VERSION
-        self.start_events()
+
+        # DEBUG
+        #self.start_events()
 
     @staticmethod
     def get_version() -> str:
@@ -66,6 +68,7 @@ class DPSController:
     def connect(self) -> tuple[bool, str]:
         """Start controller, connect to device"""
         conn, msg = self.engine.connect(self.status.port, self.status.slave, self.status.baudrate)
+        print(f'Stat: {conn} Msg: {msg}')
         if not conn:
             return False, "ERROR: Cannot connect to DPS device."
 
@@ -100,13 +103,13 @@ class DPSController:
 
     def __event_provider(self) -> None:
         """Event provider thread filling up the event queue"""
-
         # These are debug things
-        stat: DPSStatus = DPSStatus()
-        stat.registers.u_out = 900
+        #stat: DPSStatus = DPSStatus()
+        #stat.registers.u_out = 900
+
         while True:
-            #registers : dict[str, any] = self.engine.get_status()
-            self.event_queue.put_nowait(stat)
+            registers : dict[str, any] = self.engine.get_registers()
+            self.event_queue.put_nowait(registers)
             sleep(1)
 
     def start_events(self) -> None:
@@ -141,7 +144,9 @@ class DPSController:
             return False, 'Invalid command'
 
         # Execute
-        return execute[0](execute[1])
+        ret = execute[0](execute[1])
+        print(ret)
+        return ret
 
     # Private methods
     def __handle_connect(self, cmd) -> tuple[bool, str]:
