@@ -59,7 +59,7 @@ class DPSMainWindow(QMainWindow):
         baud_edit: QLineEdit = get_lineedit('', fontsize, 6)
         baud_edit.setMaximumWidth(140)
         baud_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
-        baud_edit.setText(self.controller.get_baudrate())
+        baud_edit.setText(self.controller.get_baud_rate())
         baud_edit.setEnabled(False)
         slave_label:QLabel = get_label('Slave', fontsize)
         slave_edit: QLineEdit = get_lineedit('', fontsize, 2)
@@ -352,14 +352,13 @@ class DPSMainWindow(QMainWindow):
         """Handle event from controller, render status into GUI components"""
         while self.__running:
             print('Waiting for event to appear...')
-            try:
-                data = self.controller.event_queue.get(True, 2)
-                print(data)
-                self.__update_status(data)
-            except queue.Empty as error:
-                print('Waiting more...')
-            finally:
-                continue
+            data = self.controller.event_queue.get()
+            if data is None:
+                print('Event handler quitting...')
+                break
+            print(data)
+            self.__update_status(data)
+
 
     # Public methods
     def setup(self) -> None:

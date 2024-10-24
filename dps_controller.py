@@ -29,8 +29,6 @@ from dps_status import DPSStatus
 from dps_engine import DPSEngine
 import utils
 
-# Global flag for stopping producing events
-STOP_EVENTS: bool = False
 VERSION: str = '0.2'
 
 class DPSController:
@@ -42,8 +40,6 @@ class DPSController:
         self.status.baud_rate = conf['connection']['baud_rate']
         self.event_queue: SimpleQueue = events
         self.event_thread : threading.Thread or None = None
-
-
 
         # Instance to talk to DPS device through Modbus
         self.engine = DPSEngine(debug = False)
@@ -104,16 +100,13 @@ class DPSController:
 
     def __event_provider(self) -> None:
         """Event provider thread filling up the event queue"""
-        global STOP_EVENTS
-        STOP_EVENTS = False
-        running = True
+
+        # These are debug things
         stat: DPSStatus = DPSStatus()
         stat.registers.u_out = 900
-        while running:
+        while True:
             #registers : dict[str, any] = self.engine.get_status()
             self.event_queue.put_nowait(stat)
-            if STOP_EVENTS:
-                running = False
             sleep(1)
 
     def start_events(self) -> None:
@@ -121,17 +114,16 @@ class DPSController:
         self.event_thread = threading.Thread(target=self.__event_provider, args=(), daemon=True)
         self.event_thread.start()
 
-    @staticmethod
-    def stop_events() -> None:
-        """Stop producing events"""
-        global STOP_EVENTS
-        STOP_EVENTS = True
+    def stop_events(self) -> None:
+        """Stop producing events by inserting None event"""
+        self.event_queue.put_nowait(None)
 
     def parse_command(self, cmd: str) -> tuple[bool, str]:
         """Parse input command and act upon it. Return false if quit requested"""
         print(f'Parser got: {cmd}')
         # Special case for quitting program
         if cmd == 'q':
+            self.stop_events()
             return True, 'Quit requested'
 
         # Tuple containing handler information
