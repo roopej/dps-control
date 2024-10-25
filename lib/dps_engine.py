@@ -5,7 +5,7 @@ Modbus protocol
 
 from typing import List, Union
 import minimalmodbus
-from minimalmodbus import ModbusException
+from minimalmodbus import ModbusException, NoResponseError
 from serial import SerialException
 from enum import IntEnum
 from .dps_status import DPSRegisters
@@ -22,6 +22,7 @@ class DPSRegister(IntEnum):
     PWR_OUT = 0x4
     VOLTS_UIN = 0x5
     PWR_ONOFF = 0x9
+    MODEL = 0x0B
 
 class DPSEngine:
     """Class interacting with DPS5005 through Modbus protocol"""
@@ -35,7 +36,9 @@ class DPSEngine:
         """Connect to DPS through modbus"""
         try:
             self.instrument = minimalmodbus.Instrument(port, slave)
-        except (SerialException, ModbusException) as error:
+            # Connection test
+            val = self.__read_register(DPSRegister.MODEL, 0)
+        except (SerialException, ModbusException, NoResponseError) as error:
             print(error)
             return False, 'Serial exception'
 

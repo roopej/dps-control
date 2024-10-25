@@ -326,8 +326,7 @@ class DPSMainWindow(QMainWindow):
 
     def __handle_buttons(self) -> None:
         """Handle button presses from UI, form command for controller"""
-        cmd: str = str()
-        self.log(cmd)
+        cmd: str
         sender = self.sender()
         sender_name = sender.objectName()
         print(sender_name)
