@@ -22,6 +22,7 @@ VIN_NAME = 'volts_in'
 CV_NAME = 'cv_indicator'
 CC_NAME = 'cc_indicator'
 CONN_NAME = 'conn_indicator'
+SETBUTTON_NAME = 'button_set'
 
 class QVLine(QFrame):
     def __init__(self) -> None:
@@ -120,7 +121,8 @@ class DPSMainWindow(QMainWindow):
 
     def __controls_changed(self, *args) -> None:
         """Handle signal from control UI element"""
-        self.button_set.setEnabled(True)
+        if self.controller.status.connected:
+            self.button_set.setEnabled(True)
 
     def __get_control_panel(self) -> QVBoxLayout:
         """Panel for setting volts and amps"""
@@ -146,7 +148,7 @@ class DPSMainWindow(QMainWindow):
 
         # Button to commit values
         self.button_set: QPushButton = button_factory('Set')
-        self.button_set.setObjectName('button_set')
+        self.button_set.setObjectName(SETBUTTON_NAME)
         self.button_set.setEnabled(False)
         self.button_set.clicked.connect(self.__handle_buttons)
 
@@ -302,6 +304,7 @@ class DPSMainWindow(QMainWindow):
         return layout
 
     def closeEvent(self, event):
+        self.controller.event_queue.put_nowait(None)
         self.__running = False
 
     # Private functional methods
@@ -331,6 +334,8 @@ class DPSMainWindow(QMainWindow):
             if ret:
                 connected_ind = self.findChild(StatusIndicator, CONN_NAME)
                 connected_ind.setEnabled(True)
+                button_set = self.findChild(QPushButton, SETBUTTON_NAME)
+                button_set.setEnabled(True)
             else:
                 self.log(msg)
 

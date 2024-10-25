@@ -28,7 +28,7 @@ class DPSEngine:
     def __init__(self, debug : bool = False) -> None:
         """Constructor"""
         self.registers = DPSRegisters()
-        self.instrument = None
+        self.instrument: minimalmodbus.Instrument
         self.debug: bool = debug
 
     def connect(self, port: str, slave: int, baud_rate: int) -> tuple[bool, str]:

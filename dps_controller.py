@@ -39,7 +39,7 @@ class DPSController:
         self.status.slave = conf['connection']['slave']
         self.status.baud_rate = conf['connection']['baud_rate']
         self.event_queue: SimpleQueue = events
-        self.event_thread : threading.Thread or None = None
+        self.event_thread : threading.Thread
 
         # Instance to talk to DPS device through Modbus
         self.engine = DPSEngine(debug = False)
