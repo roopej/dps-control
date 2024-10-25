@@ -56,10 +56,10 @@ set up correctly you can also run the application by
 ### GUI
 
 The leftmost panel is for connectivity settings and status display. Connectivity fields are not editable in GUI, they 
-should be set in `dps_controller.cfg` configuration file before application launch. The middle panel is for controlling
+should be set in `dps_control.cfg` configuration file before application launch. The middle panel is for controlling
 the output values. You can either turn the dials, drag the bar display up or down or enter the desired value in
 the edit box. However, the change is not committed to the DPS5005 device in real-time, you need to hit the *Set* button
-to commit the values.
+to commit the values. Values cannot be set if there is no verified connection to the device.
 
 On the right hand side panel the current output voltage, current and power are shown in addition on input voltage.
 
