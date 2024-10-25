@@ -7,6 +7,10 @@ There should be no problem to run it on macOS and maybe even Windows is possible
 device is handled by the simple minimalmodbus library.
 
 ## Configuration
+### Requirements
+The application has been tested with Python 3.11.9. It will run (probably) on any version where PySide6 dependency can 
+be installed.
+
 ### General
 Please check first `dps_control.cfg` file. It has very few settings but they are important as you need to tell the 
 CLI in which tty port your DPS5005 device is and what its slave number is.  Configuration file also includes setting for used 
@@ -34,7 +38,7 @@ TBD
 
 ## Running
 
-You can run the CLI in virtual python environment with script `./setup.sh`
+You can run the GUI in virtual python environment with script `./setup.sh` in Linux.
 
 This will create `virtualenv` folder, install requirements there run the application. Once your environment is
 set up correctly you can also run the application by
