@@ -9,6 +9,7 @@ from lib.dps_status import DPSStatus
 from lib.utils import button_factory, get_label, get_lineedit, ivoltsf, iampsf, iwattsf
 import ui.breeze_pyside6
 
+# Names for UI objects we use
 DEFAULT_FONT = 'Arial'
 VOUT_NAME = 'volts_out'
 AOUT_NAME = 'amps_out'
@@ -18,6 +19,7 @@ CV_NAME = 'cv_indicator'
 CC_NAME = 'cc_indicator'
 CONN_NAME = 'conn_indicator'
 SETBUTTON_NAME = 'button_set'
+CLIEDIT_NAME = 'cli_edit'
 
 class QVLine(QFrame):
     def __init__(self) -> None:
@@ -294,6 +296,8 @@ class DPSMainWindow(QMainWindow):
 
         cliLabel: QLabel = get_label('CLI:', 12)
         cli_input: QLineEdit = get_lineedit('', 14, 256, Qt.FocusPolicy.StrongFocus)
+        cli_input.setObjectName(CLIEDIT_NAME)
+        cli_input.setEnabled(False)
         layout.addWidget(cliLabel)
         layout.addWidget(cli_input)
         return layout
@@ -331,6 +335,8 @@ class DPSMainWindow(QMainWindow):
                 connected_ind.setEnabled(True)
                 button_set = self.findChild(QPushButton, SETBUTTON_NAME)
                 button_set.setEnabled(True)
+                cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
+                cli_edit.setEnabled(True)
             else:
                 self.log(msg)
 
