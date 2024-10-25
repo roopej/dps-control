@@ -36,20 +36,21 @@ class DPSEngine:
         """Connect to DPS through modbus"""
         try:
             self.instrument = minimalmodbus.Instrument(port, slave)
+            self.instrument.serial.baud_rate = baud_rate
+            self.instrument.serial.bytesize = 8
+            self.instrument.serial.timeout = 0.5
+            self.instrument.mode = minimalmodbus.MODE_RTU
+            self.instrument.close_port_after_each_call = False
+            self.instrument.debug = self.debug
             # Connection test
             val = self.__read_register(DPSRegister.MODEL, 0)
+            # Set power off if connection test succeeds
+            self.set_power(False)
         except (SerialException, ModbusException, NoResponseError) as error:
             print(error)
             return False, 'Serial exception'
 
-        self.instrument.serial.baud_rate = baud_rate
-        self.instrument.serial.bytesize = 8
-        self.instrument.serial.timeout = 0.5
-        self.instrument.mode = minimalmodbus.MODE_RTU
-        self.instrument.close_port_after_each_call = False
-        self.instrument.debug = self.debug
-        self.set_power(False)
-        return True, ''
+        return True, str(val)
 
     # Getters and setters
     def set_power(self, enable: bool) -> tuple[bool, str]:

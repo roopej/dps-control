@@ -310,16 +310,34 @@ class DPSMainWindow(QMainWindow):
         self.__running = False
 
     # Private functional methods
+    def __print_cli_help(self):
+        """Print help about available CLI commands"""
+        self.log('-----------------------------------------------------------')
+        self.log('Available commands:')
+        self.log('    a  <value>\tSet current to value (float)')
+        self.log('    v  <value>\tSet voltage to value (float)')
+        self.log('    va <value> <value> Set voltage and current to value (float)')
+        self.log('    x\tToggle output power ON/OFF.')
+        self.log('    p  <port>\tSet device port to <port> eg. /dev/ttyUSB0')
+        self.log('    h\tPrint this text')
+        self.log('    q\tQuit program')
+
     def __handle_cli_command(self) -> None:
         """Get input from CLI edit box and send it as command to the controller"""
         cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
         command = cli_edit.text()
         if len(command):
-            print(command)
-            ret, msg = self.controller.parse_command(command)
-            self.log(msg)
+            #print(command)
+            #self.log(msg)
+            # Some local command handling for UI
             if command == 'q':
                 self.close()
+            elif command == 'h':
+                self.__print_cli_help()
+                cli_edit.setText('')
+                return
+
+            ret, msg = self.controller.parse_command(command)
             cli_edit.setText('')
             self.__update_status(self.controller.status)
 
@@ -465,6 +483,7 @@ def DPSGui(controller: DPSController) -> None:
     window.setFixedSize(600, 750)
     window.show()
     window.log(f'dps-control v{controller.get_version()}')
+    window.log('Type \'h\' in CLI field for help')
     app.exec()
 
 if __name__ == '__main__':
