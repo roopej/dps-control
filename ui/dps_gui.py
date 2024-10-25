@@ -20,6 +20,7 @@ CC_NAME = 'cc_indicator'
 CONN_NAME = 'conn_indicator'
 SETBUTTON_NAME = 'button_set'
 CLIEDIT_NAME = 'cli_edit'
+PORT_NAME = 'port_edit'
 
 class QVLine(QFrame):
     def __init__(self) -> None:
@@ -53,6 +54,7 @@ class DPSMainWindow(QMainWindow):
         fontsize = 14
         port_label: QLabel = get_label('Port', fontsize)
         port_edit: QLineEdit = get_lineedit('', fontsize)
+        port_edit.setObjectName(PORT_NAME)
         port_edit.setMaximumWidth(140)
         port_edit.setAlignment(Qt.AlignmentFlag.AlignRight)
         port_edit.setText(self.controller.get_port())
@@ -97,9 +99,9 @@ class DPSMainWindow(QMainWindow):
         status_hbox.addWidget(status_label)
         status_hbox.addWidget(status_indicator)
 
-        self.button_connect: QPushButton = button_factory('Connect')
-        self.button_connect.setObjectName('button_connect')
-        self.button_connect.clicked.connect(self, self.__handle_buttons)
+        button_connect: QPushButton = button_factory('Connect')
+        button_connect.setObjectName('button_connect')
+        button_connect.clicked.connect(self, self.__handle_buttons)
 
         layout.addWidget(QHLine())
         layout.addWidget(port_label)
@@ -113,7 +115,7 @@ class DPSMainWindow(QMainWindow):
         layout.addLayout(cv_hbox)
         layout.addLayout(cc_hbox)
         layout.addLayout(status_hbox)
-        layout.addWidget(self.button_connect)
+        layout.addWidget(button_connect)
         return layout
 
     def __controls_changed(self, *args) -> None:
@@ -297,7 +299,8 @@ class DPSMainWindow(QMainWindow):
         cliLabel: QLabel = get_label('CLI:', 12)
         cli_input: QLineEdit = get_lineedit('', 14, 256, Qt.FocusPolicy.StrongFocus)
         cli_input.setObjectName(CLIEDIT_NAME)
-        cli_input.setEnabled(False)
+        cli_input.setEnabled(True)
+        cli_input.editingFinished.connect(self.__handle_cli_command)
         layout.addWidget(cliLabel)
         layout.addWidget(cli_input)
         return layout
@@ -307,6 +310,20 @@ class DPSMainWindow(QMainWindow):
         self.__running = False
 
     # Private functional methods
+    def __handle_cli_command(self) -> None:
+        """Get input from CLI edit box and send it as command to the controller"""
+        cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
+        command = cli_edit.text()
+        if len(command):
+            print(command)
+            ret, msg = self.controller.parse_command(command)
+            self.log(msg)
+            if command == 'q':
+                self.close()
+            cli_edit.setText('')
+            self.__update_status(self.controller.status)
+
+
     def __handle_buttons(self) -> None:
         """Handle button presses from UI, form command for controller"""
         cmd: str = str()
@@ -369,14 +386,17 @@ class DPSMainWindow(QMainWindow):
         aout.setText(str(iampsf(status.registers.i_out)))
         pout.setText(str(iwattsf(status.registers.p_out)))
         vin.setText(str(ivoltsf(status.registers.u_in)))
+        port_edit = self.findChild(QLineEdit, PORT_NAME)
+        port_edit.setText(self.controller.status.port)
 
         # Handle CV/CC indicator
-        if status.registers.cvcc == 0:
-            cv.setEnabled(True)
-            cc.setEnabled(False)
-        else:
-            cv.setEnabled(False)
-            cc.setEnabled(True)
+        if self.controller.status.connected:
+            if status.registers.cvcc == 0:
+                cv.setEnabled(True)
+                cc.setEnabled(False)
+            else:
+                cv.setEnabled(False)
+                cc.setEnabled(True)
 
         self.update()
 
