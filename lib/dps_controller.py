@@ -25,9 +25,9 @@ from typing import Callable
 from queue import SimpleQueue
 from time import sleep
 
-from dps_status import DPSStatus
-from dps_engine import DPSEngine
-import utils
+from lib.dps_status import DPSStatus
+from lib.dps_engine import DPSEngine
+from lib.utils import *
 
 VERSION: str = '0.2'
 
@@ -163,7 +163,7 @@ class DPSController:
 
     def __handle_power_switch(self, pwr) -> tuple[bool, str]:
         """Handle power on/off and toggle commands, toggle if specific argument"""
-        switchto: bool = False
+        switchto: bool
         if len(pwr) == 0:
             switchto = not self.status.registers.onoff
         else:
@@ -183,7 +183,7 @@ class DPSController:
 
     def __handle_set_volts(self, args) -> tuple[bool, str]:
         """Function to handle set volts command"""
-        if utils.validate_float(args):
+        if validate_float(args):
             ret, msg = self.engine.set_volts(float(args))
             if not ret:
                 return False, 'Set volts failed'
@@ -195,7 +195,7 @@ class DPSController:
             return False, 'Invalid values'
         volts: str = args[0]
         amps: str = args[1]
-        if utils.validate_float(volts) and utils.validate_float(amps):
+        if validate_float(volts) and validate_float(amps):
             ret, msg = self.engine.set_volts_and_amps(float(volts), float(amps))
             if not ret:
                 return False, 'Set volts failed'
@@ -203,7 +203,7 @@ class DPSController:
 
     def __handle_set_amps(self, args) -> tuple[bool, str]:
         """Function to handle set amps command"""
-        if utils.validate_float(args):
+        if validate_float(args):
             ret, msg = self.engine.set_amps(float(args))
             if not ret:
                 return False, 'Set amps failed'

@@ -1,6 +1,6 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import Qt, Signal
-from utils import button_factory, get_label, get_lineedit, validate_float
+from lib.utils import get_label, get_lineedit, validate_float
 
 
 class _Bar(QtWidgets.QWidget):

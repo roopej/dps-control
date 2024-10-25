@@ -1,8 +1,7 @@
 """
 Simple CLI to use DPS Control engine
 """
-from queue import SimpleQueue
-from dps_controller import DPSController
+from lib.dps_controller import DPSController
 
 class DPSCli:
     """CLI view, passes commands to DPS Controller"""

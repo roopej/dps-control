@@ -1,18 +1,13 @@
 """DPS-Control GUI"""
-import queue
-
+import sys
 from PySide6.QtWidgets import *
 from PySide6.QtCore import Qt, QFile, QTextStream, QThreadPool, Slot
-from PySide6.QtGui import QFont, QPalette, QColor
-from threading import Thread
-import sys
-import breeze_pyside6
-from custom_widgets import dialbar, statusindicator, togglebutton
+from custom_widgets import dialbar, statusindicator
 from custom_widgets.statusindicator import StatusIndicator
-from dps_controller import DPSController
-from dps_status import DPSStatus
-from custom_widgets.togglebutton import ToggleButton
-from utils import button_factory, get_label, get_lineedit, ivoltsf, iampsf, iwattsf
+from lib.dps_controller import DPSController
+from lib.dps_status import DPSStatus
+from lib.utils import button_factory, get_label, get_lineedit, ivoltsf, iampsf, iwattsf
+import breeze_pyside6
 
 DEFAULT_FONT = 'Arial'
 VOUT_NAME = 'volts_out'

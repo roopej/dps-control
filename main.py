@@ -2,8 +2,7 @@
 import sys
 from queue import SimpleQueue
 from yaml import safe_load, YAMLError
-import minimalmodbus
-from dps_controller import DPSController
+from lib.dps_controller import DPSController
 from dps_cli import DPSCli
 from dps_gui import DPSGui
 

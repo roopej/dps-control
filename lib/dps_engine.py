@@ -8,10 +8,10 @@ import minimalmodbus
 from minimalmodbus import ModbusException
 from serial import SerialException
 from enum import IntEnum
-from dps_status import DPSRegisters
+from .dps_status import DPSRegisters
 
 # Converters from int -> float
-from utils import iampsf, ivoltsf, iwattsf
+from .utils import iampsf, ivoltsf, iwattsf
 
 class DPSRegister(IntEnum):
     """Register addresses of DPS5005"""
