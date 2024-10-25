@@ -19,14 +19,12 @@ def main():
     except YAMLError as error:
         print(f'Error parsing configurationf file {error}')
 
+    # Print config if debug
     if conf['misc']['debug']:
         print (conf)
 
-    # Create event queue, TODO: Move to controller
-    event_q: SimpleQueue = SimpleQueue()
-
     # Create controller
-    controller = DPSController(conf, event_q)
+    controller = DPSController(conf)
 
     # Start CLI if requested
     if len(args) > 1 and args[1] == '--cli':
