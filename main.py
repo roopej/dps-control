@@ -3,8 +3,8 @@ import sys
 from queue import SimpleQueue
 from yaml import safe_load, YAMLError
 from lib.dps_controller import DPSController
-from dps_cli import DPSCli
-from dps_gui import DPSGui
+from ui.dps_cli import DPSCli
+from ui.dps_gui import DPSGui
 
 def main():
     """dps-control application"""

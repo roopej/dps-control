@@ -7,7 +7,7 @@ from custom_widgets.statusindicator import StatusIndicator
 from lib.dps_controller import DPSController
 from lib.dps_status import DPSStatus
 from lib.utils import button_factory, get_label, get_lineedit, ivoltsf, iampsf, iwattsf
-import breeze_pyside6
+import ui.breeze_pyside6
 
 DEFAULT_FONT = 'Arial'
 VOUT_NAME = 'volts_out'
