@@ -68,17 +68,12 @@ class DPSController:
     def connect(self) -> tuple[bool, str]:
         """Start controller, connect to device"""
         conn, msg = self.engine.connect(self.status.port, self.status.slave, self.status.baudrate)
-        print(f'Stat: {conn} Msg: {msg}')
         if not conn:
             return False, "ERROR: Cannot connect to DPS device."
 
         self.status.connected = True
         self.start_events()
         return True, "Connection successful"
-
-    # def get_state(self) -> tuple[bool, str]:
-    #     """Print state of DPS device"""
-    #     return True, str(self.status)
 
     def get_portinfo(self) -> tuple[bool, str]:
         """Convenience method to get just the port info"""
@@ -103,16 +98,10 @@ class DPSController:
 
     def __event_provider(self) -> None:
         """Event provider thread filling up the event queue"""
-        # These are debug things
-        #stat: DPSStatus = DPSStatus()
-        #stat.registers.u_out = 900
-
         while True:
             status: DPSStatus = DPSStatus()
             registers : dict[str, any] = self.engine.get_registers()
             status.registers = registers
-            print(f'Pushing status event: {status}')
-            print(f'There are {self.event_queue.qsize()} events in the queue')
             self.event_queue.put_nowait(status)
             sleep(1)
 
@@ -127,7 +116,7 @@ class DPSController:
 
     def parse_command(self, cmd: str) -> tuple[bool, str]:
         """Parse input command and act upon it. Return false if quit requested"""
-        print(f'Parser got: {cmd}')
+        # print(f'Parser got: {cmd}')
         # Special case for quitting program
         if cmd == 'q':
             self.stop_events()
@@ -161,9 +150,7 @@ class DPSController:
         """Handle connect command"""
 
         # Ignore extra arguments
-        #args = cmd.split()[0]
         args = self.__get_args(cmd, 1)
-        print(args)
         if self.status.connected:
             return False, 'Already connected'
         if len(cmd):
@@ -204,8 +191,6 @@ class DPSController:
 
     def __handle_set_volts_and_amps(self, args) -> tuple[bool, str]:
         """Function to handle set volts command"""
-        print('Roope')
-        print(args)
         if len(args.split()) < 2:
             return False, 'Invalid values'
         volts: str = args.split()[0]
@@ -229,11 +214,7 @@ class DPSController:
     def __get_cmd_and_validate(self, cmd: str) -> tuple[Callable or None, str, bool]:
         """Get command handler and validate args"""
         main_cmd = cmd.split()[0].lower()
-        print(f'Main: {main_cmd}')
         # Get args if available
-        #args = str()
-        #if len(cmd.split()) > 1:
-        #    args: str = cmd.split()[1]
         args: str = ' '.join(cmd.split()[1:])
 
         # Commands to handle (handler, arguments, connection_required)

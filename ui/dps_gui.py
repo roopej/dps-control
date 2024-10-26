@@ -42,23 +42,20 @@ class QHLine(QFrame):
 
 class EventUpdater(QRunnable):
     """Worker thread class to get events and update UI"""
-    def __init__(self, controller: DPSController, dps_ui):
+    def __init__(self, controller: DPSController, callback: callable):
         super(EventUpdater, self).__init__()
         self.__controller = controller
-        self.__dps_ui = dps_ui
+        self.__update_callback = callback
     @Slot()
     def run(self):
         """Handle event from controller, render status into GUI components"""
         data: DPSStatus
         while True:
-            print('Waiting for event to appear...')
             data = self.__controller.event_queue.get()
             if data is None:
                 print('Event handler quitting...')
                 break
-            print(f'Got event: {data}')
-            self.__dps_ui.update_status(data)
-        print('Quitting event handling loop')
+            self.__update_callback(data)
 
 class DPSMainWindow(QMainWindow):
     def __init__(self, controller: DPSController):
@@ -350,8 +347,6 @@ class DPSMainWindow(QMainWindow):
         cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
         command = cli_edit.text()
         if len(command):
-            #print(command)
-            #self.log(msg)
             # Some local command handling for UI
             if command == 'q':
                 self.close()
@@ -370,7 +365,6 @@ class DPSMainWindow(QMainWindow):
         cmd: str
         sender = self.sender()
         sender_name = sender.objectName()
-        print(sender_name)
         if sender_name == PWRBUTTON_NAME:
             cmd = 'x'
             if self.controller.get_power_state() is False:
@@ -453,23 +447,6 @@ class DPSMainWindow(QMainWindow):
 
         self.update()
 
-
-
-
-    # @Slot()
-    # def __handle_events(self):
-    #     """Handle event from controller, render status into GUI components"""
-    #     while self.__running:
-    #         print('Waiting for event to appear...')
-    #         data = self.controller.event_queue.get()
-    #         if data is None:
-    #             print('Event handler quitting...')
-    #             break
-    #         print(f'Got event: {data}')
-    #         self.__update_status(data)
-    #     print('Quitting event handling loop')
-
-
     # Public methods
     def setup(self) -> None:
         """Setup UI"""
@@ -491,10 +468,9 @@ class DPSMainWindow(QMainWindow):
         mainVLayout.addLayout(cliHLayout, 1)
 
         # Set up event handling from controller
-        print('Starting event thread')
         self.thread_manager = QThreadPool()
         self.__running = True
-        self.eventupdater = EventUpdater(self.controller, self)
+        self.eventupdater = EventUpdater(self.controller, self.update_status)
         self.thread_manager.start(self.eventupdater)
 
         # Central widget
