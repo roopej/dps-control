@@ -65,7 +65,7 @@ class DPSMainWindow(QMainWindow):
         self.log_pane = QPlainTextEdit()
         self.controller = controller
         self.__running = False
-        self.__first_update = True
+        self.__flag_update_controls = True
 
     # Private UI setup methods
     def __get_setup_panel(self) -> QVBoxLayout:
@@ -338,7 +338,6 @@ class DPSMainWindow(QMainWindow):
         self.log('    v  <value>\tSet voltage to value (float)')
         self.log('    va <value> <value> Set voltage and current to value (float)')
         self.log('    x\tToggle output power ON/OFF.')
-        self.log('    p  <port>\tSet device port to <port> eg. /dev/ttyUSB0')
         self.log('    h\tPrint this text')
         self.log('    q\tQuit program')
 
@@ -346,18 +345,27 @@ class DPSMainWindow(QMainWindow):
         """Get input from CLI edit box and send it as command to the controller"""
         cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
         command = cli_edit.text()
+        main_cmd = command.split()[0] if len(command.split()) > 1 else command
         if len(command):
             # Some local command handling for UI
-            if command == 'q':
+            if main_cmd == 'q':
                 self.close()
-            elif command == 'h':
+            elif main_cmd == 'p':
+                self.log('Port command is not supported. Please us dps_control.cfg configuration file.')
+                cli_edit.setText('')
+                return
+            elif main_cmd == 'h':
                 self.__print_cli_help()
                 cli_edit.setText('')
                 return
 
             ret, msg = self.controller.parse_command(command)
+            print(ret, msg)
             cli_edit.setText('')
+
+            # Update GUI control values after CLI command so they stay in sync
             self.update_status(self.controller.status)
+            self.__flag_update_controls = True
 
 
     def __handle_buttons(self) -> None:
@@ -412,16 +420,21 @@ class DPSMainWindow(QMainWindow):
         # Send command
         self.controller.parse_command(cmd)
 
+    def __update_controls(self, volts: int, amps: int):
+        """Update control dials to be in sync with settings, they may
+        be set in CLI as well
+        """
+        vcontrol = self.findChild(dialbar.DialBar, name='volt_control')
+        acontrol = self.findChild(dialbar.DialBar, name='amp_control')
+        vcontrol.set_value(volts)
+        acontrol.set_value(amps)
+
     def update_status(self, status: DPSStatus):
         """Update UI according to status information"""
-
         # On first update, set the control values to what has been set in device
-        if self.__first_update:
-            vcontrol = self.findChild(dialbar.DialBar, name = 'volt_control')
-            acontrol = self.findChild(dialbar.DialBar, name = 'amp_control')
-            vcontrol.set_value(status.registers.u_set*10)
-            acontrol.set_value(status.registers.i_set)
-            self.__first_update = False
+        if self.__flag_update_controls:
+            self.__update_controls(status.registers.u_set * 10, status.registers.i_set)
+            self.__flag_update_controls = False
 
         vout = self.findChild(QLineEdit, VOUT_NAME)
         aout = self.findChild(QLineEdit, AOUT_NAME)
