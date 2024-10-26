@@ -108,8 +108,12 @@ class DPSController:
         #stat.registers.u_out = 900
 
         while True:
+            status: DPSStatus = DPSStatus()
             registers : dict[str, any] = self.engine.get_registers()
-            self.event_queue.put_nowait(registers)
+            status.registers = registers
+            print(f'Pushing status event: {status}')
+            print(f'There are {self.event_queue.qsize()} events in the queue')
+            self.event_queue.put_nowait(status)
             sleep(1)
 
     def start_events(self) -> None:

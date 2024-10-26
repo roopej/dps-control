@@ -1,7 +1,7 @@
 """DPS-Control GUI"""
 import sys
 from PySide6.QtWidgets import *
-from PySide6.QtCore import Qt, QFile, QTextStream, QThreadPool, Slot
+from PySide6.QtCore import Qt, QFile, QTextStream, QThreadPool, Slot, QRunnable
 from custom_widgets import dialbar, statusindicator
 from custom_widgets.statusindicator import StatusIndicator
 from lib.dps_controller import DPSController
@@ -39,6 +39,26 @@ class QHLine(QFrame):
         self.setFrameShadow(QFrame.Shadow.Sunken)
         self.setLineWidth(3)
         self.setMidLineWidth(1)
+
+class EventUpdater(QRunnable):
+    """Worker thread class to get events and update UI"""
+    def __init__(self, controller: DPSController, dps_ui):
+        super(EventUpdater, self).__init__()
+        self.__controller = controller
+        self.__dps_ui = dps_ui
+    @Slot()
+    def run(self):
+        """Handle event from controller, render status into GUI components"""
+        data: DPSStatus
+        while True:
+            print('Waiting for event to appear...')
+            data = self.__controller.event_queue.get()
+            if data is None:
+                print('Event handler quitting...')
+                break
+            print(f'Got event: {data}')
+            self.__dps_ui.update_status(data)
+        print('Quitting event handling loop')
 
 class DPSMainWindow(QMainWindow):
     def __init__(self, controller: DPSController):
@@ -341,7 +361,7 @@ class DPSMainWindow(QMainWindow):
 
             ret, msg = self.controller.parse_command(command)
             cli_edit.setText('')
-            self.__update_status(self.controller.status)
+            self.update_status(self.controller.status)
 
 
     def __handle_buttons(self) -> None:
@@ -397,7 +417,7 @@ class DPSMainWindow(QMainWindow):
         # Send command
         self.controller.parse_command(cmd)
 
-    def __update_status(self, status: DPSStatus):
+    def update_status(self, status: DPSStatus):
         """Update UI according to status information"""
         vout = self.findChild(QLineEdit, VOUT_NAME)
         aout = self.findChild(QLineEdit, AOUT_NAME)
@@ -426,17 +446,18 @@ class DPSMainWindow(QMainWindow):
 
 
 
-    @Slot()
-    def __handle_events(self):
-        """Handle event from controller, render status into GUI components"""
-        while self.__running:
-            print('Waiting for event to appear...')
-            data = self.controller.event_queue.get()
-            if data is None:
-                print('Event handler quitting...')
-                break
-            print(data)
-            self.__update_status(data)
+    # @Slot()
+    # def __handle_events(self):
+    #     """Handle event from controller, render status into GUI components"""
+    #     while self.__running:
+    #         print('Waiting for event to appear...')
+    #         data = self.controller.event_queue.get()
+    #         if data is None:
+    #             print('Event handler quitting...')
+    #             break
+    #         print(f'Got event: {data}')
+    #         self.__update_status(data)
+    #     print('Quitting event handling loop')
 
 
     # Public methods
@@ -463,7 +484,8 @@ class DPSMainWindow(QMainWindow):
         print('Starting event thread')
         self.thread_manager = QThreadPool()
         self.__running = True
-        self.thread_manager.start(self.__handle_events)
+        self.eventupdater = EventUpdater(self.controller, self)
+        self.thread_manager.start(self.eventupdater)
 
         # Central widget
         centralWidget = QWidget()
