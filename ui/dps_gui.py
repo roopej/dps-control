@@ -330,6 +330,17 @@ class DPSMainWindow(QMainWindow):
         self.__running = False
 
     # Private functional methods
+    def __connected_success(self):
+        """Do stuff when connection has been successful"""
+        connected_ind = self.findChild(StatusIndicator, CONN_NAME)
+        connected_ind.setEnabled(True)
+        button_set = self.findChild(QPushButton, SETBUTTON_NAME)
+        button_set.setEnabled(True)
+        cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
+        cli_edit.setEnabled(True)
+        button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
+        button_pwr.setEnabled(True)
+
     def __print_cli_help(self):
         """Print help about available CLI commands"""
         self.log('-----------------------------------------------------------')
@@ -347,7 +358,7 @@ class DPSMainWindow(QMainWindow):
         command = cli_edit.text()
         main_cmd = command.split()[0] if len(command.split()) > 1 else command
         if len(command):
-            # Some local command handling for UI
+            # Commands which can be used before connection
             if main_cmd == 'q':
                 self.close()
             elif main_cmd == 'p':
@@ -359,9 +370,19 @@ class DPSMainWindow(QMainWindow):
                 cli_edit.setText('')
                 return
 
+            # Let controller parse the command and act upon it
             ret, msg = self.controller.parse_command(command)
             print(ret, msg)
             cli_edit.setText('')
+
+            # If we connected through CLI, update UI accordingly
+            if main_cmd == 'c':
+                if ret:
+                    self.__connected_success()
+            elif main_cmd == 'x':
+                if ret:
+                    button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
+                    button_pwr.setChecked(not button_pwr.isChecked())
 
             # Update GUI control values after CLI command so they stay in sync
             self.update_status(self.controller.status)
@@ -391,14 +412,7 @@ class DPSMainWindow(QMainWindow):
             # We are connected, light LED
             if ret:
                 sender.setEnabled(False)
-                connected_ind = self.findChild(StatusIndicator, CONN_NAME)
-                connected_ind.setEnabled(True)
-                button_set = self.findChild(QPushButton, SETBUTTON_NAME)
-                button_set.setEnabled(True)
-                cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
-                cli_edit.setEnabled(True)
-                button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
-                button_pwr.setEnabled(True)
+                self.__connected_success()
             else:
                 self.log(msg)
             return
