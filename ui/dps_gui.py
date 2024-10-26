@@ -340,6 +340,8 @@ class DPSMainWindow(QMainWindow):
         cli_edit.setEnabled(True)
         button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
         button_pwr.setEnabled(True)
+        button_conn = self.findChild(QPushButton, CONBUTTON_NAME)
+        button_conn.setEnabled(False)
 
     def __print_cli_help(self):
         """Print help about available CLI commands"""
@@ -347,10 +349,10 @@ class DPSMainWindow(QMainWindow):
         self.log('Available commands:')
         self.log('    a  <value>\tSet current to value (float)')
         self.log('    v  <value>\tSet voltage to value (float)')
-        self.log('    va <value> <value> Set voltage and current to value (float)')
-        self.log('    x\tToggle output power ON/OFF.')
-        self.log('    h\tPrint this text')
-        self.log('    q\tQuit program')
+        self.log('    va <value> <value> \tSet voltage and current to value (float)')
+        self.log('    x\t\tToggle output power ON/OFF.')
+        self.log('    h\t\tPrint this text')
+        self.log('    q\t\tQuit program')
 
     def __handle_cli_command(self) -> None:
         """Get input from CLI edit box and send it as command to the controller"""
@@ -379,15 +381,21 @@ class DPSMainWindow(QMainWindow):
             if main_cmd == 'c':
                 if ret:
                     self.__connected_success()
+                    self.log(f'Success: {msg}')
+                else:
+                    self.log(f'Failed: {msg}')
             elif main_cmd == 'x':
                 if ret:
                     button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
                     button_pwr.setChecked(not button_pwr.isChecked())
+                    self.log(f'Success: {msg}')
 
             # Update GUI control values after CLI command so they stay in sync
             self.update_status(self.controller.status)
             self.__flag_update_controls = True
 
+            if not ret:
+                self.log('Command failed')
 
     def __handle_buttons(self) -> None:
         """Handle button presses from UI, form command for controller"""
@@ -411,7 +419,6 @@ class DPSMainWindow(QMainWindow):
             ret, msg = self.controller.parse_command(cmd)
             # We are connected, light LED
             if ret:
-                sender.setEnabled(False)
                 self.__connected_success()
             else:
                 self.log(msg)
