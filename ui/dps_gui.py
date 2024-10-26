@@ -19,6 +19,8 @@ CV_NAME = 'cv_indicator'
 CC_NAME = 'cc_indicator'
 CONN_NAME = 'conn_indicator'
 SETBUTTON_NAME = 'button_set'
+CONBUTTON_NAME = 'button_connect'
+PWRBUTTON_NAME = 'button_power'
 CLIEDIT_NAME = 'cli_edit'
 PORT_NAME = 'port_edit'
 
@@ -100,7 +102,7 @@ class DPSMainWindow(QMainWindow):
         status_hbox.addWidget(status_indicator)
 
         button_connect: QPushButton = button_factory('Connect')
-        button_connect.setObjectName('button_connect')
+        button_connect.setObjectName(CONBUTTON_NAME)
         button_connect.clicked.connect(self, self.__handle_buttons)
 
         layout.addWidget(QHLine())
@@ -223,17 +225,17 @@ class DPSMainWindow(QMainWindow):
         volt_in_hbox.addWidget(volt_in_edit)
         volt_in_hbox.addWidget(volt_in_unit_label)
 
-        self.button_onoff = button_factory('Power', toggle=True)
-        self.button_onoff.setCheckable(True)
-        self.button_onoff.setObjectName('button_onoff')
-        self.button_onoff.setEnabled(False)
+        button_onoff = button_factory('Power', toggle=True)
+        button_onoff.setObjectName(PWRBUTTON_NAME)
+        button_onoff.setCheckable(True)
+        button_onoff.setEnabled(False)
 
-        self.button_set.setSizePolicy(
+        button_onoff.setSizePolicy(
             QSizePolicy.MinimumExpanding,
             QSizePolicy.Fixed
         )
         #self.button_set.setMinimumWidth(150)
-        self.button_onoff.clicked.connect(self, self.__handle_buttons)
+        button_onoff.clicked.connect(self, self.__handle_buttons)
 
         # Pack stuff into layout
         layout.addWidget(QHLine())
@@ -246,7 +248,7 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(volt_in_label)
         layout.addLayout(volt_in_hbox)
         #layout.addWidget(QHLine())
-        layout.addWidget(self.button_onoff)
+        layout.addWidget(button_onoff)
 
         return layout
 
@@ -348,7 +350,7 @@ class DPSMainWindow(QMainWindow):
         sender = self.sender()
         sender_name = sender.objectName()
         print(sender_name)
-        if sender_name == 'button_onoff':
+        if sender_name == PWRBUTTON_NAME:
             cmd = 'x'
             if self.controller.get_power_state() is False:
                 self.log('Switching power ON')
@@ -358,19 +360,22 @@ class DPSMainWindow(QMainWindow):
             #  * Warn about initial settings?
             #  * Check that power is actually on
             #  * Set toggle button status accordingly
-        elif sender_name == 'button_connect':
+        elif sender_name == CONBUTTON_NAME:
             self.log('Connecting')
             cmd: str = f'c {self.controller.status.port}'
 
             ret, msg = self.controller.parse_command(cmd)
             # We are connected, light LED
             if ret:
+                sender.setEnabled(False)
                 connected_ind = self.findChild(StatusIndicator, CONN_NAME)
                 connected_ind.setEnabled(True)
                 button_set = self.findChild(QPushButton, SETBUTTON_NAME)
                 button_set.setEnabled(True)
                 cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
                 cli_edit.setEnabled(True)
+                button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
+                button_pwr.setEnabled(True)
             else:
                 self.log(msg)
 
@@ -378,7 +383,7 @@ class DPSMainWindow(QMainWindow):
             #  * Check if connection was successful
             #  * Set connected LED accordingly
             #  * No disconnect option necessary
-        elif sender_name == 'button_set':
+        elif sender_name == SETBUTTON_NAME:
             vcontrol = self.findChild(dialbar.DialBar, name = 'volt_control')
             acontrol = self.findChild(dialbar.DialBar, name = 'amp_control')
             vstr = vcontrol.get_value()

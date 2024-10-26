@@ -36,21 +36,23 @@ class DPSEngine:
         """Connect to DPS through modbus"""
         try:
             self.instrument = minimalmodbus.Instrument(port, slave)
-            self.instrument.serial.baud_rate = baud_rate
+            self.instrument.serial.baudrate = baud_rate
             self.instrument.serial.bytesize = 8
             self.instrument.serial.timeout = 0.5
             self.instrument.mode = minimalmodbus.MODE_RTU
             self.instrument.close_port_after_each_call = False
             self.instrument.debug = self.debug
+            print(self.instrument)
             # Connection test
             val = self.__read_register(DPSRegister.MODEL, 0)
+            print (val)
             # Set power off if connection test succeeds
             self.set_power(False)
         except (SerialException, ModbusException, NoResponseError) as error:
             print(error)
             return False, 'Serial exception'
 
-        return True, str(val)
+        return True, str('')
 
     # Getters and setters
     def set_power(self, enable: bool) -> tuple[bool, str]:
@@ -111,6 +113,7 @@ class DPSEngine:
     def get_printable_status(self) -> tuple[bool, str]:
         """Get dump of status variables of DPS"""
         # TODO: Move to DPSStatus() __repr__ __str__?
+        self.get_registers()
         ret_str = str()
         ret_str += f'U-Set:\t\t{self.registers.u_set / 100.0}\n'
         ret_str += f'I-Set:\t\t{self.registers.i_set / 1000.0}\n'

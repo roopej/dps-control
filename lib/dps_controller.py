@@ -157,7 +157,7 @@ class DPSController:
             self.status.port = cmd
         return self.connect()
 
-    def __handle_info(self) -> tuple[bool, str]:
+    def __handle_info(self, cmd) -> tuple[bool, str]:
         """Handle info command"""
         return self.engine.get_printable_status()
 
