@@ -378,6 +378,7 @@ class DPSMainWindow(QMainWindow):
                 button_pwr.setEnabled(True)
             else:
                 self.log(msg)
+            return
 
             # TODO:
             #  * Check if connection was successful
@@ -394,7 +395,7 @@ class DPSMainWindow(QMainWindow):
             #  * Check minimum and maximum limits and cancel if necessary
             sender.setEnabled(False)
         # Send command
-        # self.controller.parse_command(cmd)
+        self.controller.parse_command(cmd)
 
     def __update_status(self, status: DPSStatus):
         """Update UI according to status information"""

@@ -149,12 +149,21 @@ class DPSController:
         return ret
 
     # Private methods
+    def __get_args(self, cmd: str, num: int):
+        """Get num of arguments for command, ignore extras"""
+        return ' '.join(cmd.split()[0:num])
+
     def __handle_connect(self, cmd) -> tuple[bool, str]:
         """Handle connect command"""
+
+        # Ignore extra arguments
+        #args = cmd.split()[0]
+        args = self.__get_args(cmd, 1)
+        print(args)
         if self.status.connected:
             return False, 'Already connected'
         if len(cmd):
-            self.status.port = cmd
+            self.status.port = args
         return self.connect()
 
     def __handle_info(self, cmd) -> tuple[bool, str]:
@@ -191,7 +200,9 @@ class DPSController:
 
     def __handle_set_volts_and_amps(self, args) -> tuple[bool, str]:
         """Function to handle set volts command"""
-        if len(args.split() < 2):
+        print('Roope')
+        print(args)
+        if len(args.split()) < 2:
             return False, 'Invalid values'
         volts: str = args[0]
         amps: str = args[1]
@@ -212,11 +223,12 @@ class DPSController:
     def __get_cmd_and_validate(self, cmd: str) -> tuple[Callable or None, str, bool]:
         """Get command handler and validate args"""
         main_cmd = cmd.split()[0].lower()
-
+        print(f'Main: {main_cmd}')
         # Get args if available
-        args = str()
-        if len(cmd.split()) > 1:
-            args: str = cmd.split()[1]
+        #args = str()
+        #if len(cmd.split()) > 1:
+        #    args: str = cmd.split()[1]
+        args: str = cmd[1:]
 
         # Commands to handle (handler, arguments, connection_required)
         if main_cmd == 'c':
