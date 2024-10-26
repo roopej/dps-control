@@ -163,3 +163,8 @@ class DialBar(QtWidgets.QWidget):
         except ValueError:
             return 0.0
         return val
+
+    def set_value(self, val: int):
+        """Set value of the dial"""
+        self._dial.setValue(val)
+

@@ -68,6 +68,7 @@ class DPSMainWindow(QMainWindow):
         self.log_pane = QPlainTextEdit()
         self.controller = controller
         self.__running = False
+        self.__first_update = True
 
     # Private UI setup methods
     def __get_setup_panel(self) -> QVBoxLayout:
@@ -419,6 +420,15 @@ class DPSMainWindow(QMainWindow):
 
     def update_status(self, status: DPSStatus):
         """Update UI according to status information"""
+
+        # On first update, set the control values to what has been set in device
+        if self.__first_update:
+            vcontrol = self.findChild(dialbar.DialBar, name = 'volt_control')
+            acontrol = self.findChild(dialbar.DialBar, name = 'amp_control')
+            vcontrol.set_value(status.registers.u_set*10)
+            acontrol.set_value(status.registers.i_set)
+            self.__first_update = False
+
         vout = self.findChild(QLineEdit, VOUT_NAME)
         aout = self.findChild(QLineEdit, AOUT_NAME)
         pout = self.findChild(QLineEdit, POUT_NAME)
