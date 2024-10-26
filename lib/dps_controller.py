@@ -204,13 +204,15 @@ class DPSController:
         print(args)
         if len(args.split()) < 2:
             return False, 'Invalid values'
-        volts: str = args[0]
-        amps: str = args[1]
+        volts: str = args.split()[0]
+        amps: str = args.split()[1]
         if validate_float(volts) and validate_float(amps):
             ret, msg = self.engine.set_volts_and_amps(float(volts), float(amps))
             if not ret:
                 return False, 'Set volts failed'
             return True, 'Success'
+        else:
+            print('Invalid values')
 
     def __handle_set_amps(self, args) -> tuple[bool, str]:
         """Function to handle set amps command"""
@@ -228,7 +230,7 @@ class DPSController:
         #args = str()
         #if len(cmd.split()) > 1:
         #    args: str = cmd.split()[1]
-        args: str = cmd[1:]
+        args: str = ' '.join(cmd.split()[1:])
 
         # Commands to handle (handler, arguments, connection_required)
         if main_cmd == 'c':
