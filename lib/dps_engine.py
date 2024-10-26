@@ -4,6 +4,7 @@ Modbus protocol
 """
 
 from typing import List, Union
+from threading import Lock
 import minimalmodbus
 from minimalmodbus import ModbusException, NoResponseError
 from serial import SerialException
@@ -12,6 +13,9 @@ from .dps_status import DPSRegisters
 
 # Converters from int -> float
 from .utils import iampsf, ivoltsf, iwattsf
+
+# Use lock to prevent simultaneous R/W access to DPS device
+lock = Lock()
 
 class DPSRegister(IntEnum):
     """Register addresses of DPS5005"""
@@ -153,20 +157,24 @@ class DPSEngine:
     # Communication through Modbus, catch exceptions on these (TODO), used internally by class
     def __write_register(self, address: int, value: Union[int,float], num_decimals: int) -> None:
         """Write single register at address"""
-        self.instrument.write_register(address, value=value, number_of_decimals=num_decimals)
+        with lock:
+            self.instrument.write_register(address, value=value, number_of_decimals=num_decimals)
 
     def __write_registers(self, address: int, values: List[int]) -> None:
         """Write list of registers into address"""
-        self.instrument.write_registers(registeraddress=address, values=values)
+        with lock:
+            self.instrument.write_registers(registeraddress=address, values=values)
 
     def __read_register(self, address: int, num_decimals: int) -> Union[int, float]:
         """Read single register from address"""
-        retval: int | float = self.instrument.read_register(address, num_decimals)
+        with lock:
+            retval: int | float = self.instrument.read_register(address, num_decimals)
         return retval
 
     def __read_registers(self, address: int, number: int) -> List[int]:
         """Read number of registers starting from address"""
-        regs : List[int] = self.instrument.read_registers(registeraddress=address,
+        with lock:
+            regs : List[int] = self.instrument.read_registers(registeraddress=address,
                                                    number_of_registers=number)
         return regs
 
