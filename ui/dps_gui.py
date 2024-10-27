@@ -395,7 +395,7 @@ class DPSMainWindow(QMainWindow):
             self.__flag_update_controls = True
 
             if not ret:
-                self.log('Command failed')
+                self.log(f'Failed: {msg}')
 
     def __handle_buttons(self) -> None:
         """Handle button presses from UI, form command for controller"""

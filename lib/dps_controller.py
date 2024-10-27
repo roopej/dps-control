@@ -186,12 +186,42 @@ class DPSController:
         self.status.port = port
         return True, f'Port set to {port}'
 
+    def __check_volts_range(self, volts: float) -> bool:
+        """Check that requested volts are within configured limits"""
+        v_max = self.conf['limits']['max_voltage']
+        v_min = self.conf['limits']['min_voltage']
+        if v_max >= volts >= v_min:
+            return True
+        return False
+
+    def __check_amps_range(self, amps: float) -> bool:
+        """Check that requested amps are within configured limits"""
+        a_max = self.conf['limits']['max_current']
+        a_min = self.conf['limits']['min_current']
+        if a_max >= amps >= a_min:
+            return True
+        return False
+
     def __handle_set_volts(self, args) -> tuple[bool, str]:
         """Function to handle set volts command"""
         if validate_float(args):
-            ret, msg = self.engine.set_volts(float(args))
+            volts = float(args)
+            if not self.__check_volts_range(volts):
+                return False, f'Voltage requested out of configured limits [{volts}]'
+            ret, msg = self.engine.set_volts(volts)
             if not ret:
                 return False, 'Set volts failed'
+            return True, 'Success'
+
+    def __handle_set_amps(self, args) -> tuple[bool, str]:
+        """Function to handle set amps command"""
+        if validate_float(args):
+            amps = float(args)
+            if not self.__check_amps_range(amps):
+                return False, f'Current requested out of configured limits [{amps}]'
+            ret, msg = self.engine.set_amps(amps)
+            if not ret:
+                return False, 'Set amps failed'
             return True, 'Success'
 
     def __handle_set_volts_and_amps(self, args) -> tuple[bool, str]:
@@ -201,20 +231,18 @@ class DPSController:
         volts: str = args.split()[0]
         amps: str = args.split()[1]
         if validate_float(volts) and validate_float(amps):
+            a = float(amps)
+            v = float(volts)
+
+            if not self.__check_amps_range(a) or not self.__check_volts_range(v):
+                return False, f'Voltage or current requested out of configured limits [{v} V, {a} A]'
+
             ret, msg = self.engine.set_volts_and_amps(float(volts), float(amps))
             if not ret:
                 return False, 'Set volts failed'
-            return True, 'Success'
+            return True, f'Success: set volts to {v} and amps to {a}'
         else:
             print('Invalid values')
-
-    def __handle_set_amps(self, args) -> tuple[bool, str]:
-        """Function to handle set amps command"""
-        if validate_float(args):
-            ret, msg = self.engine.set_amps(float(args))
-            if not ret:
-                return False, 'Set amps failed'
-            return True, 'Success'
 
     def __get_cmd_and_validate(self, cmd: str) -> tuple[Callable or None, str, bool]:
         """Get command handler and validate args"""
