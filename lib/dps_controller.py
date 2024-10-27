@@ -35,6 +35,7 @@ class DPSController:
     """Handles logic and parsing commands"""
     def __init__(self, conf) -> None:
         self.status: DPSStatus = DPSStatus()
+        self.conf = conf
         self.status.port = conf['connection']['tty_port']
         self.status.slave = conf['connection']['slave']
         self.status.baud_rate = conf['connection']['baud_rate']
@@ -44,9 +45,6 @@ class DPSController:
         # Instance to talk to DPS device through Modbus
         self.engine = DPSEngine(debug = False)
         self.version: str = VERSION
-
-        # DEBUG
-        #self.start_events()
 
     @staticmethod
     def get_version() -> str:
@@ -72,6 +70,13 @@ class DPSController:
             return False, "ERROR: Cannot connect to DPS device."
 
         self.status.connected = True
+        self.get_status()
+
+        # If configured, start with power off always
+        if self.conf['misc']['start_power_off']:
+            self.engine.set_power(False)
+            self.status.registers.onoff = 0
+
         self.start_events()
         return True, "Connection successful"
 

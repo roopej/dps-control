@@ -408,10 +408,6 @@ class DPSMainWindow(QMainWindow):
                 self.log('Switching power ON')
             else:
                 self.log('Switching power OFF')
-            # TODO:
-            #  * Warn about initial settings?
-            #  * Check that power is actually on
-            #  * Set toggle button status accordingly
         elif sender_name == CONBUTTON_NAME:
             self.log('Connecting')
             cmd: str = f'c {self.controller.status.port}'
@@ -423,11 +419,6 @@ class DPSMainWindow(QMainWindow):
             else:
                 self.log(msg)
             return
-
-            # TODO:
-            #  * Check if connection was successful
-            #  * Set connected LED accordingly
-            #  * No disconnect option necessary
         elif sender_name == SETBUTTON_NAME:
             vcontrol = self.findChild(dialbar.DialBar, name = 'volt_control')
             acontrol = self.findChild(dialbar.DialBar, name = 'amp_control')

@@ -48,10 +48,9 @@ class DPSEngine:
             self.instrument.debug = self.debug
             print(self.instrument)
             # Connection test
-            val = self.__read_register(DPSRegister.MODEL, 0)
+            val = self.__read_register(DPSRegister.PWR_ONOFF, 0)
+            self.registers.onoff = val
             print (val)
-            # Set power off if connection test succeeds
-            self.set_power(False)
         except (SerialException, ModbusException, NoResponseError) as error:
             print(error)
             return False, 'Serial exception'
