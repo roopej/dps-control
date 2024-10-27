@@ -23,6 +23,8 @@ CONBUTTON_NAME = 'button_connect'
 PWRBUTTON_NAME = 'button_power'
 CLIEDIT_NAME = 'cli_edit'
 PORT_NAME = 'port_edit'
+VCONTROL_NAME = 'volt_control'
+ACONTROL_NAME = 'amp_control'
 
 class QVLine(QFrame):
     def __init__(self) -> None:
@@ -150,11 +152,13 @@ class DPSMainWindow(QMainWindow):
         # Dials for Volts and Amps
         va_dial_layout = QHBoxLayout()
         volt_control = dialbar.DialBar('V', 4)
-        volt_control.setObjectName('volt_control')
+        volt_control.setObjectName(VCONTROL_NAME)
         amp_control = dialbar.DialBar('A', 5)
-        amp_control.setObjectName('amp_control')
-        volt_control.set_range(0.0, 3.0)
-        amp_control.set_range(0,5)
+        amp_control.setObjectName(ACONTROL_NAME)
+        vmax = self.controller.get_vmax()
+        amax = self.controller.get_amax()
+        volt_control.set_range(0, vmax)
+        amp_control.set_range(0, amax)
 
         # Connect change signals
         volt_control.valuesChanged.connect(self.__controls_changed)
@@ -420,14 +424,12 @@ class DPSMainWindow(QMainWindow):
                 self.log(msg)
             return
         elif sender_name == SETBUTTON_NAME:
-            vcontrol = self.findChild(dialbar.DialBar, name = 'volt_control')
-            acontrol = self.findChild(dialbar.DialBar, name = 'amp_control')
+            vcontrol = self.findChild(dialbar.DialBar, name = VCONTROL_NAME)
+            acontrol = self.findChild(dialbar.DialBar, name = ACONTROL_NAME)
             vstr = vcontrol.get_value()
             astr = acontrol.get_value()
             cmd: str = f'va {vstr} {astr}'
-            self.log(f'Set output: {vstr} V {astr} A')
-            # TODO:
-            #  * Check minimum and maximum limits and cancel if necessary
+            self.log(f'Set output: {vstr} V,  {astr} A')
             sender.setEnabled(False)
         # Send command
         self.controller.parse_command(cmd)
@@ -436,8 +438,8 @@ class DPSMainWindow(QMainWindow):
         """Update control dials to be in sync with settings, they may
         be set in CLI as well
         """
-        vcontrol = self.findChild(dialbar.DialBar, name='volt_control')
-        acontrol = self.findChild(dialbar.DialBar, name='amp_control')
+        vcontrol = self.findChild(dialbar.DialBar, name=VCONTROL_NAME)
+        acontrol = self.findChild(dialbar.DialBar, name=ACONTROL_NAME)
         vcontrol.set_value(volts)
         acontrol.set_value(amps)
 

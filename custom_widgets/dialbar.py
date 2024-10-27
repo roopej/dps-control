@@ -62,7 +62,11 @@ class _Bar(QtWidgets.QWidget):
         bar_height = pc * d_height
 
         # Meter
-        num_lines: int = int(vmax / 1000)
+        num_lines: int
+        if vmax < 1000:
+            num_lines = 1
+        else:
+            num_lines = int(vmax / 1000)
         line_space: float = d_height / num_lines
 
         # Labels

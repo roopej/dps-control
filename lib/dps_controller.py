@@ -46,6 +46,12 @@ class DPSController:
         self.engine = DPSEngine(debug = False)
         self.version: str = VERSION
 
+        # Limits from configuration
+        self.v_max = self.conf['limits']['max_voltage']
+        self.v_min = self.conf['limits']['min_voltage']
+        self.a_max = self.conf['limits']['max_current']
+        self.a_min = self.conf['limits']['min_current']
+
     @staticmethod
     def get_version() -> str:
         """Get version string"""
@@ -100,6 +106,22 @@ class DPSController:
         # Update registers
         self.status.registers = self.engine.get_registers()
         return self.status
+
+    def get_vmax(self) -> float:
+        """Get max voltage from configuration"""
+        return self.v_max
+
+    def get_vmin(self) -> float:
+        """Get min voltage from configuration"""
+        return self.v_min
+
+    def get_amax(self) -> float:
+        """Get max current from configuration"""
+        return self.a_max
+
+    def get_amin(self) -> float:
+        """Get min current from configuration"""
+        return self.a_min
 
     def __event_provider(self) -> None:
         """Event provider thread filling up the event queue"""
@@ -188,17 +210,13 @@ class DPSController:
 
     def __check_volts_range(self, volts: float) -> bool:
         """Check that requested volts are within configured limits"""
-        v_max = self.conf['limits']['max_voltage']
-        v_min = self.conf['limits']['min_voltage']
-        if v_max >= volts >= v_min:
+        if self.v_max >= volts >= self.v_min:
             return True
         return False
 
     def __check_amps_range(self, amps: float) -> bool:
         """Check that requested amps are within configured limits"""
-        a_max = self.conf['limits']['max_current']
-        a_min = self.conf['limits']['min_current']
-        if a_max >= amps >= a_min:
+        if self.a_max >= amps >= self.a_min:
             return True
         return False
 
