@@ -1,6 +1,5 @@
 """User Interfaces for DPS Control"""
 import sys
-from queue import SimpleQueue
 from yaml import safe_load, YAMLError
 from lib.dps_controller import DPSController
 from ui.dps_cli import DPSCli
@@ -17,7 +16,7 @@ def main():
         with open(config_file, 'r') as file:
             conf = safe_load(file)
     except YAMLError as error:
-        print(f'Error parsing configurationf file {error}')
+        print(f'Error parsing configuration file {error}')
 
     # Print config if debug
     if conf['misc']['debug']:

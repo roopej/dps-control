@@ -143,7 +143,7 @@ class DPSController:
 
     def parse_command(self, cmd: str) -> tuple[bool, str]:
         """Parse input command and act upon it. Return false if quit requested"""
-        # print(f'Parser got: {cmd}')
+        #print(f'Parser got: {cmd}')
         # Special case for quitting program
         if cmd == 'q':
             self.stop_events()
@@ -164,9 +164,9 @@ class DPSController:
             return False, 'Invalid command'
 
         # Execute
-        ret = execute[0](execute[1])
+        ret, msg = execute[0](execute[1])
         print(ret)
-        return ret
+        return ret, msg
 
     # Private methods
     def __get_args(self, cmd: str, num: int):
@@ -225,22 +225,26 @@ class DPSController:
         if validate_float(args):
             volts = float(args)
             if not self.__check_volts_range(volts):
-                return False, f'Voltage requested out of configured limits [{volts}]'
+                return False, f'Voltage requested out of configured limits [{self.v_max}]'
             ret, msg = self.engine.set_volts(volts)
             if not ret:
-                return False, 'Set volts failed'
-            return True, 'Success'
+                return False, f'Set volts to {volts} V failed'
+            return True, f'Set volts to {volts} V'
+        else:
+            return False, 'Invalid values'
 
     def __handle_set_amps(self, args) -> tuple[bool, str]:
         """Function to handle set amps command"""
         if validate_float(args):
             amps = float(args)
             if not self.__check_amps_range(amps):
-                return False, f'Current requested out of configured limits [{amps}]'
+                return False, f'Current requested out of configured limits [{self.a_max}]'
             ret, msg = self.engine.set_amps(amps)
             if not ret:
-                return False, 'Set amps failed'
-            return True, 'Success'
+                return False, f'Set amps to {amps} A failed'
+            return True, f'Set amps to {amps} A'
+        else:
+            return False, 'Invalid values'
 
     def __handle_set_volts_and_amps(self, args) -> tuple[bool, str]:
         """Function to handle set volts command"""
@@ -253,14 +257,14 @@ class DPSController:
             v = float(volts)
 
             if not self.__check_amps_range(a) or not self.__check_volts_range(v):
-                return False, f'Voltage or current requested out of configured limits [{v} V, {a} A]'
+                return False, f'Voltage or current requested out of configured limits [{self.v_max} V, {self.a_max} A]'
 
             ret, msg = self.engine.set_volts_and_amps(float(volts), float(amps))
             if not ret:
-                return False, 'Set volts failed'
-            return True, f'Success: set volts to {v} and amps to {a}'
+                return False, 'Set values failed'
+            return True, f'Set volts to {v} V and amps to {a} A'
         else:
-            print('Invalid values')
+            return False, 'Invalid values'
 
     def __get_cmd_and_validate(self, cmd: str) -> tuple[Callable or None, str, bool]:
         """Get command handler and validate args"""
@@ -284,4 +288,5 @@ class DPSController:
         elif main_cmd == 'x':
             return self.__handle_power_switch, args, True
         else:
+            print('Should not reach here')
             return None, '', False

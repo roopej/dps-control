@@ -55,7 +55,7 @@ class EventUpdater(QRunnable):
         while True:
             data = self.__controller.event_queue.get()
             if data is None:
-                print('Event handler quitting...')
+                #print('Event handler quitting...')
                 break
             self.__update_callback(data)
 
@@ -68,6 +68,11 @@ class DPSMainWindow(QMainWindow):
         self.controller = controller
         self.__running = False
         self.__flag_update_controls = True
+
+    def __retstr(self, code: bool, msg: str) -> str:
+        """String representation of return code and associated message"""
+        retcode = 'Success' if code else 'Failed'
+        return f'{retcode}: {msg}'
 
     # Private UI setup methods
     def __get_setup_panel(self) -> QVBoxLayout:
@@ -368,7 +373,7 @@ class DPSMainWindow(QMainWindow):
             if main_cmd == 'q':
                 self.close()
             elif main_cmd == 'p':
-                self.log('Port command is not supported. Please us dps_control.cfg configuration file.')
+                self.log('Port command is not supported in GUI. Please us dps_control.cfg configuration file.')
                 cli_edit.setText('')
                 return
             elif main_cmd == 'h':
@@ -377,51 +382,40 @@ class DPSMainWindow(QMainWindow):
                 return
 
             # Let controller parse the command and act upon it
+            print(command)
             ret, msg = self.controller.parse_command(command)
-            print(ret, msg)
             cli_edit.setText('')
 
             # If we connected through CLI, update UI accordingly
             if main_cmd == 'c':
                 if ret:
                     self.__connected_success()
-                    self.log(f'Success: {msg}')
-                else:
-                    self.log(f'Failed: {msg}')
+
             elif main_cmd == 'x':
                 if ret:
                     button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
                     button_pwr.setChecked(not button_pwr.isChecked())
-                    self.log(f'Success: {msg}')
 
             # Update GUI control values after CLI command so they stay in sync
             self.update_status(self.controller.status)
             self.__flag_update_controls = True
-
-            if not ret:
-                self.log(f'Failed: {msg}')
+            self.log(self.__retstr(ret, msg))
 
     def __handle_buttons(self) -> None:
         """Handle button presses from UI, form command for controller"""
-        cmd: str
+        cmd: str = ''
         sender = self.sender()
         sender_name = sender.objectName()
         if sender_name == PWRBUTTON_NAME:
             cmd = 'x'
-            if self.controller.get_power_state() is False:
-                self.log('Switching power ON')
-            else:
-                self.log('Switching power OFF')
         elif sender_name == CONBUTTON_NAME:
             self.log('Connecting')
             cmd: str = f'c {self.controller.status.port}'
-
             ret, msg = self.controller.parse_command(cmd)
             # We are connected, light LED
             if ret:
                 self.__connected_success()
-            else:
-                self.log(msg)
+            self.log(self.__retstr(ret, msg))
             return
         elif sender_name == SETBUTTON_NAME:
             vcontrol = self.findChild(dialbar.DialBar, name = VCONTROL_NAME)
@@ -429,10 +423,10 @@ class DPSMainWindow(QMainWindow):
             vstr = vcontrol.get_value()
             astr = acontrol.get_value()
             cmd: str = f'va {vstr} {astr}'
-            self.log(f'Set output: {vstr} V,  {astr} A')
             sender.setEnabled(False)
         # Send command
-        self.controller.parse_command(cmd)
+        ret, msg = self.controller.parse_command(cmd)
+        self.log(self.__retstr(ret, msg))
 
     def __update_controls(self, volts: int, amps: int):
         """Update control dials to be in sync with settings, they may
@@ -528,4 +522,4 @@ def DPSGui(controller: DPSController) -> None:
     app.exec()
 
 if __name__ == '__main__':
-    DPSGui()
+    """The application should be run from main.py"""
