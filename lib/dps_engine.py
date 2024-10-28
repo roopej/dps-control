@@ -32,8 +32,8 @@ class DPSEngine:
     """Class interacting with DPS5005 through Modbus protocol"""
     def __init__(self, debug : bool = False) -> None:
         """Constructor"""
+        self.instrument = None
         self.registers = DPSRegisters()
-        self.instrument: minimalmodbus.Instrument
         self.debug: bool = debug
 
     def connect(self, port: str, slave: int, baud_rate: int) -> tuple[bool, str]:

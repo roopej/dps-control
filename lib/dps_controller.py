@@ -34,6 +34,7 @@ VERSION: str = '0.2'
 class DPSController:
     """Handles logic and parsing commands"""
     def __init__(self, conf) -> None:
+        self.event_thread = None
         self.status: DPSStatus = DPSStatus()
         self.conf = conf
         self.status.port = conf['connection']['tty_port']
@@ -169,7 +170,8 @@ class DPSController:
         return ret, msg
 
     # Private methods
-    def __get_args(self, cmd: str, num: int):
+    @staticmethod
+    def __get_args(cmd: str, num: int):
         """Get num of arguments for command, ignore extras"""
         return ' '.join(cmd.split()[0:num])
 
@@ -184,7 +186,7 @@ class DPSController:
             self.status.port = args
         return self.connect()
 
-    def __handle_info(self, cmd) -> tuple[bool, str]:
+    def __handle_info(self) -> tuple[bool, str]:
         """Handle info command"""
         return self.engine.get_printable_status()
 

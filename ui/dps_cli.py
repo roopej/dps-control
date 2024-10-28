@@ -23,7 +23,8 @@ class DPSCli:
         print('\th\t\tPrint this text')
         print('\tq\t\tQuit program')
 
-    def command_prompt(self) -> str:
+    @staticmethod
+    def command_prompt() -> str:
         """Get input from user and return command"""
         command: str = input('DPS> ')
         return command
