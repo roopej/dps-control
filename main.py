@@ -4,7 +4,7 @@ import os
 from yaml import safe_load, YAMLError
 from lib.dps_controller import DPSController
 from ui.dps_cli import DPSCli
-from ui.dps_gui import DPSGui
+from ui.dps_gui import dps_gui
 
 def main():
     """dps-control application"""
@@ -33,7 +33,7 @@ def main():
         ui = DPSCli(controller)
         ui.start()
     else:
-        DPSGui(controller)
+        dps_gui(controller)
 
 if __name__ == "__main__":
     main()

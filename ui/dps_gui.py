@@ -7,6 +7,7 @@ from custom_widgets.statusindicator import StatusIndicator
 from lib.dps_controller import DPSController
 from lib.dps_status import DPSStatus
 from lib.utils import button_factory, get_label, get_lineedit, ivoltsf, iampsf, iwattsf
+# noinspection PyUnresolvedReferences
 import ui.breeze_pyside6
 
 # Names for UI objects we use
@@ -62,14 +63,17 @@ class EventUpdater(QRunnable):
 class DPSMainWindow(QMainWindow):
     def __init__(self, controller: DPSController):
         super().__init__()
+        self.thread_manager = QThreadPool()
         self.setWindowTitle('DPS Controller')
         self.setMinimumSize(800, 600)
         self.log_pane = QPlainTextEdit()
         self.controller = controller
         self.__running = False
         self.__flag_update_controls = True
+        self.eventupdater = EventUpdater(self.controller, self.update_status)
 
-    def __retstr(self, code: bool, msg: str) -> str:
+    @staticmethod
+    def __retstr(code: bool, msg: str) -> str:
         """String representation of return code and associated message"""
         retcode = 'Success' if code else 'Failed'
         return f'{retcode}: {msg}'
@@ -145,7 +149,7 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(button_connect)
         return layout
 
-    def __controls_changed(self, *args) -> None:
+    def __controls_changed(self) -> None:
         """Handle signal from control UI element"""
         if self.controller.status.connected:
             self.button_set.setEnabled(True)
@@ -258,8 +262,8 @@ class DPSMainWindow(QMainWindow):
         button_onoff.setEnabled(False)
 
         button_onoff.setSizePolicy(
-            QSizePolicy.MinimumExpanding,
-            QSizePolicy.Fixed
+            QSizePolicy.Policy.MinimumExpanding,
+            QSizePolicy.Policy.Fixed
         )
         #self.button_set.setMinimumWidth(150)
         button_onoff.clicked.connect(self, self.__handle_buttons)
@@ -279,6 +283,7 @@ class DPSMainWindow(QMainWindow):
 
         return layout
 
+    # noinspection PyMethodMayBeStatic
     def __get_header_panel(self) -> QHBoxLayout:
         """This is header row for names of panels"""
         layout = QHBoxLayout()
@@ -325,12 +330,12 @@ class DPSMainWindow(QMainWindow):
         """This is the CLI interface on very bottom"""
         layout = QHBoxLayout()
 
-        cliLabel: QLabel = get_label('CLI:', 12)
+        cli_label: QLabel = get_label('CLI:', 12)
         cli_input: QLineEdit = get_lineedit('', 14, 256, Qt.FocusPolicy.StrongFocus)
         cli_input.setObjectName(CLIEDIT_NAME)
         cli_input.setEnabled(True)
         cli_input.editingFinished.connect(self.__handle_cli_command)
-        layout.addWidget(cliLabel)
+        layout.addWidget(cli_label)
         layout.addWidget(cli_input)
         return layout
 
@@ -472,32 +477,30 @@ class DPSMainWindow(QMainWindow):
     def setup(self) -> None:
         """Setup UI"""
         # Main vertical layout
-        mainVLayout = QVBoxLayout()
+        main_v_layout = QVBoxLayout()
 
         # Two horizontal boxes, one for headers, one for controls etc
-        headerHLayout: QHBoxLayout = self.__get_header_panel()
-        panelHLayout: QHBoxLayout = self.__get_panel_layout()
-        logHLayout: QHBoxLayout = self.__get_log_layout()
-        cliHLayout: QHBoxLayout = self.__get_cli_layout()
+        header_h_layout: QHBoxLayout = self.__get_header_panel()
+        panel_h_layout: QHBoxLayout = self.__get_panel_layout()
+        log_h_layout: QHBoxLayout = self.__get_log_layout()
+        cli_h_layout: QHBoxLayout = self.__get_cli_layout()
 
-        mainVLayout.addLayout(headerHLayout, 1)
-        mainVLayout.addLayout(panelHLayout, 5)
-        logLabel: QLabel = get_label('Log:', 12)
-        mainVLayout.addWidget(logLabel)
-        mainVLayout.addLayout(logHLayout, 3)
+        main_v_layout.addLayout(header_h_layout, 1)
+        main_v_layout.addLayout(panel_h_layout, 5)
+        log_label: QLabel = get_label('Log:', 12)
+        main_v_layout.addWidget(log_label)
+        main_v_layout.addLayout(log_h_layout, 3)
 
-        mainVLayout.addLayout(cliHLayout, 1)
+        main_v_layout.addLayout(cli_h_layout, 1)
 
         # Set up event handling from controller
-        self.thread_manager = QThreadPool()
         self.__running = True
-        self.eventupdater = EventUpdater(self.controller, self.update_status)
         self.thread_manager.start(self.eventupdater)
 
         # Central widget
-        centralWidget = QWidget()
-        centralWidget.setLayout(mainVLayout)
-        self.setCentralWidget(centralWidget)
+        central_widget = QWidget()
+        central_widget.setLayout(main_v_layout)
+        self.setCentralWidget(central_widget)
 
     def log(self, txt: str) -> None:
         """Append log message to log panel"""
@@ -506,11 +509,12 @@ class DPSMainWindow(QMainWindow):
 def set_styles(app: QApplication) -> None:
     """Set style from breeze themes"""
     file = QFile(":/dark/stylesheet.qss")
-    file.open(QFile.ReadOnly | QFile.Text)
+    file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text)
     stream = QTextStream(file)
     app.setStyleSheet(stream.readAll())
 
-def DPSGui(controller: DPSController) -> None:
+
+def dps_gui(controller: DPSController) -> None:
     app = QApplication(sys.argv)
     set_styles(app)
     window = DPSMainWindow(controller)
