@@ -1,3 +1,4 @@
+.DS_Store
 __pycache__
 virtualenv
 venv
@@ -6,3 +7,4 @@ env
 .idea
 dist
 build
+*.spec
