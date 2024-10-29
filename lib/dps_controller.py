@@ -29,7 +29,7 @@ from lib.dps_status import DPSStatus
 from lib.dps_engine import DPSEngine
 from lib.utils import *
 
-VERSION: str = '0.2'
+VERSION: str = '0.9_beta1'
 
 class DPSController:
     """Handles logic and parsing commands"""

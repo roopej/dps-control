@@ -31,12 +31,16 @@ check `sudo dmesg` log which shows you where it mounted the device.
 If you get permission errors about your tty port it might be that your user needs to be added to the `dialout` group.
 `sudo usermod -aG dialout $(whoami)`
 
+Other Linux distributions may use different tty naming scheme and default user groups, please adjust accordingly.
 
 ### macOS
-TBD
+
+macOS has not been tested yet. Will test in near future.
 
 ### Windows
-TBD
+
+Windows has not been tested yet. Most probably it will require some changes to Modbus communication, mainly closing
+port after each call. Will look into it if there is demand for Windows functionality.
 
 ## Running
 
@@ -82,3 +86,10 @@ You can toggle power output ON and OFF by `x` command.
 If you want to start live monitoring, you can use `l` command 
 which shows you identical readings as you have on your DPS5005 device screen.
 
+## Feedback
+
+Feedback through Github Issues is highly encouraged. 
+
+## Disclaimer
+
+You should be familiar with your own power supply and what output settings it is able to withstand. 
