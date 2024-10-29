@@ -2,6 +2,8 @@
 Simple CLI to use DPS Control engine
 """
 from lib.dps_controller import DPSController
+from lib.dps_status import DPSStatus
+
 
 class DPSCli:
     """CLI view, passes commands to DPS Controller"""
@@ -51,10 +53,11 @@ class DPSCli:
                 self.controller.start_events()
                 try:
                     while True:
-                        event = self.controller.event_queue.get(block = True, timeout= None)
-                        uout = event['U-Out']
-                        iout = event['I-Out']
-                        print(f'U-Out: \x1b[1;31m{uout:.2f}\x1b[0m V\tI-Out: \x1b[1;31m{iout:.3f}\x1b[0m A')
+                        stat: DPSStatus = self.controller.event_queue.get(block = True, timeout= None)
+                        uout =  float(stat.registers.u_out/100.0)
+                        iout = float(stat.registers.i_out/1000.0)
+                        pout = float(stat.registers.p_out/100.0)
+                        print(f'U-Out: \x1b[1;31m{uout:.2f}\x1b[0m V\tI-Out: \x1b[1;31m{iout:.3f}\x1b[0m A\tP-Out: \x1b[1;31m{pout:.2f}\x1b[0m W')
                         print('\x1b[2F')
                 except KeyboardInterrupt:
                     self.controller.stop_events()
