@@ -1,5 +1,6 @@
 from PySide6 import QtCore, QtGui, QtWidgets
 from PySide6.QtCore import Qt, Signal
+from PySide6.QtWidgets import QSizePolicy, QDial
 from lib.utils import get_label, get_lineedit, validate_float
 
 
@@ -7,14 +8,19 @@ class _Bar(QtWidgets.QWidget):
     """This is the bar portion of the control unit"""
     def __init__(self, *args, **kwargs) -> None:
         super().__init__(*args, **kwargs)
+        self.__dial = None
         self.track_mouse_y : int = 0
         self.setSizePolicy(
-            QtWidgets.QSizePolicy.MinimumExpanding,
-            QtWidgets.QSizePolicy.MinimumExpanding
+            QSizePolicy.Policy.MinimumExpanding,
+            QSizePolicy.Policy.MinimumExpanding
         )
 
+    def set_dial(self, dial: QDial):
+        """Set associated dial component"""
+        self.__dial = dial
+
     def sizeHint(self) -> QtCore.QSize:
-        return QtCore.QSize(30,120)
+        return QtCore.QSize(60,120)
 
     def mousePressEvent(self, event):
         """Record position where mouse was pressed, used to track drag"""
@@ -24,29 +30,29 @@ class _Bar(QtWidgets.QWidget):
         """Compare y position during mouse drag and adjust value"""
         if event.buttons() & QtCore.Qt.MouseButton.LeftButton:
             if event.globalPos().y() > self.track_mouse_y:
-                dial = self.parent()._dial
+                dial = self.__dial
                 curval = dial.value()
                 dial.setValue(curval - 5)
             elif event.globalPos().y() < self.track_mouse_y:
-                dial = self.parent()._dial
+                dial = self.__dial
                 curval = dial.value()
                 dial.setValue(curval + 5)
 
         self.update()
 
     def paintEvent(self, e):
-        meter_width = 35
+        meter_width = 10
 
         # Draw black meter bar, leave space for meter on right
         painter = QtGui.QPainter(self)
         brush = QtGui.QBrush()
         brush.setColor(QtGui.QColor('black'))
-        brush.setStyle(Qt.SolidPattern)
+        brush.setStyle(Qt.BrushStyle.SolidPattern)
         rect = QtCore.QRect(0, 0, painter.device().width()-meter_width, painter.device().height())
         painter.fillRect(rect, brush)
 
         # Get current state.
-        dial = self.parent()._dial
+        dial = self.__dial
         vmin, vmax = dial.minimum(), dial.maximum()
         value = dial.value()
 
@@ -91,11 +97,11 @@ class _Bar(QtWidgets.QWidget):
             x2 = d_width - 15
             y = d_height - int(n * line_space)
 
-            painter.drawLine(x1, y, x2, y)
-            painter.drawText(x2 + 2, y+8, f'{n:.1f}')
+            painter.drawLine(x1+12, y, x2+12, y)
+            painter.drawText(x2 + 14, y+8, f'{n:.1f}')
 
         # Draw bar
-        rect = QtCore.QRect(5, d_height-bar_height, d_width-meter_width-padding, bar_height)
+        rect = QtCore.QRect(5, d_height-bar_height, d_width-meter_width-padding-10, bar_height)
         brush.setColor(QtGui.QColor('yellow'))
         painter.fillRect(rect, brush)
         painter.end()
@@ -114,17 +120,19 @@ class DialBar(QtWidgets.QWidget):
 
         # Main layout
         layout = QtWidgets.QVBoxLayout()
-        self._bar = _Bar()
+
         self._dial = QtWidgets.QDial()
         self._dial.setNotchesVisible(True)
         self._dial.setNotchTarget(60)
         self._dial.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         self._dial.valueChanged.connect(self._dial_value_changed)
+        self._bar = _Bar()
+        self._bar.set_dial(self._dial)
 
         # Display part
         bottom_layout = QtWidgets.QHBoxLayout()
         self._input: QtWidgets.QLineEdit = get_lineedit('0.00', 18, maxlen, Qt.FocusPolicy.StrongFocus)
-        self._input.setMaximumWidth(100)
+        self._input.setMinimumWidth(60)
         self._input.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self._input.editingFinished.connect(self._input_value_changed)
         volt_unit_label: QtWidgets.QLabel = get_label(unit, 22)
