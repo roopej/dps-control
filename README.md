@@ -6,6 +6,8 @@ environment, you can use it in terminal-only hosts. The application has been dev
 There should be no problem to run it on macOS and maybe even Windows is possible as the communication with DPS5005
 device is handled by the simple minimalmodbus library.
 
+![](./images/dps-control-gui.png)
+
 ## Configuration
 ### Requirements
 The application has been tested with Python 3.11.9. It will run (probably) on any version where PySide6 dependency can 
