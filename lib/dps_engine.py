@@ -116,7 +116,7 @@ class DPSEngine:
         """Get dump of status variables of DPS"""
         # TODO: Move to DPSStatus() __repr__ __str__?
         self.get_registers()
-        ret_str = str()
+        ret_str = '\n'
         ret_str += f'U-Set:\t\t{self.registers.u_set / 100.0}\n'
         ret_str += f'I-Set:\t\t{self.registers.i_set / 1000.0}\n'
         ret_str += f'U-Out:\t\t{self.registers.u_out / 100.0}\n'
@@ -124,12 +124,12 @@ class DPSEngine:
         ret_str += f'P-Out:\t\t{self.registers.p_out / 100.0}\n'
         ret_str += f'U-In:\t\t{self.registers.u_in / 100.0}\n'
         ret_str += f'Locked:\t\t{self.registers.lock}\n'
-        ret_str += f'Protected:\t{self.registers.protect}\n'
+        ret_str += f'Protected:\t\t{self.registers.protect}\n'
         ret_str += f'CV/CC:\t\t{self.registers.cvcc}\n'
         ret_str += f'ONOFF:\t\t{self.registers.onoff}\n'
-        ret_str += f'Backlight:\t{self.registers.b_led}\n'
+        ret_str += f'Backlight:\t\t{self.registers.b_led}\n'
         ret_str += f'Model:\t\t{self.registers.model}\n'
-        ret_str += f'Firmware:\t{self.registers.version / 10.0}\n'
+        ret_str += f'Firmware:\t\t{self.registers.version / 10.0}\n'
         return True, ret_str
 
     def get_registers(self) -> DPSRegisters or None:
@@ -147,8 +147,10 @@ class DPSEngine:
         reg.lock = reg_list[6]
         reg.protect = reg_list[7]
         reg.cvcc = reg_list[8]
-        reg.model = reg_list[9]
-        reg.version = reg_list[10]
+        reg.onoff = reg_list[9]
+        reg.b_led = reg_list[10]
+        reg.model = reg_list[11]
+        reg.version = reg_list[12]
         return reg
 
     # Private methods

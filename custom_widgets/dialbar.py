@@ -20,7 +20,7 @@ class _Bar(QtWidgets.QWidget):
         self.__dial = dial
 
     def sizeHint(self) -> QtCore.QSize:
-        return QtCore.QSize(60,120)
+        return QtCore.QSize(70,120)
 
     def mousePressEvent(self, event):
         """Record position where mouse was pressed, used to track drag"""
@@ -57,7 +57,7 @@ class _Bar(QtWidgets.QWidget):
         value = dial.value()
 
         # Padding for bar
-        padding = 5
+        padding = 9
 
         # Define our canvas.
         d_height = painter.device().height() - (padding * 2)
@@ -97,11 +97,11 @@ class _Bar(QtWidgets.QWidget):
             x2 = d_width - 15
             y = d_height - int(n * line_space)
 
-            painter.drawLine(x1+12, y, x2+12, y)
-            painter.drawText(x2 + 14, y+8, f'{n:.1f}')
+            painter.drawLine(x1+16, y, x2+22, y)
+            painter.drawText(x2 + 6, y+12, f'{n:.1f}')
 
         # Draw bar
-        rect = QtCore.QRect(5, d_height-bar_height, d_width-meter_width-padding-10, bar_height)
+        rect = QtCore.QRect(5, d_height-bar_height, d_width-meter_width-padding-5, bar_height)
         brush.setColor(QtGui.QColor('yellow'))
         painter.fillRect(rect, brush)
         painter.end()

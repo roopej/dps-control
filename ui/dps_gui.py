@@ -387,7 +387,6 @@ class DPSMainWindow(QMainWindow):
                 return
 
             # Let controller parse the command and act upon it
-            print(command)
             ret, msg = self.controller.parse_command(command)
             cli_edit.setText('')
 
@@ -395,11 +394,13 @@ class DPSMainWindow(QMainWindow):
             if main_cmd == 'c':
                 if ret:
                     self.__connected_success()
-
             elif main_cmd == 'x':
                 if ret:
                     button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
                     button_pwr.setChecked(not button_pwr.isChecked())
+            elif main_cmd == 'i':
+                if ret:
+                    self.log('DPS5005 registers:')
 
             # Update GUI control values after CLI command so they stay in sync
             self.update_status(self.controller.status)

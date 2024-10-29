@@ -166,7 +166,6 @@ class DPSController:
 
         # Execute
         ret, msg = execute[0](execute[1])
-        print(ret)
         return ret, msg
 
     # Private methods
@@ -186,7 +185,7 @@ class DPSController:
             self.status.port = args
         return self.connect()
 
-    def __handle_info(self) -> tuple[bool, str]:
+    def __handle_info(self, cmd: str = '') -> tuple[bool, str]:
         """Handle info command"""
         return self.engine.get_printable_status()
 
@@ -290,5 +289,5 @@ class DPSController:
         elif main_cmd == 'x':
             return self.__handle_power_switch, args, True
         else:
-            print('Should not reach here')
-            return None, '', False
+            # Unrecognized command, return None
+            return None, 'Invalid command', False
