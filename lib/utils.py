@@ -1,7 +1,6 @@
 from PySide6.QtWidgets import QLineEdit, QPushButton, QLabel
-from PySide6.QtGui import QFont, QPalette, QColor
+from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
-from custom_widgets.togglebutton import ToggleButton
 from custom_widgets.togglebutton import ToggleButton
 
 DEFAULT_FONT = 'Arial'
@@ -27,14 +26,13 @@ def get_lineedit(text: str, fontsize: int, maxlen: int = 128, focus: Qt.FocusPol
 
 def button_factory(text: str, toggle: bool = False) -> QPushButton:
     # Default style for non-toggle button
-    btnStyle = (
+    btn_style = (
         "border-radius: 7;"
     )
     if not toggle:
         btn = QPushButton(text)
-        btn.setStyleSheet(btnStyle)
+        btn.setStyleSheet(btn_style)
     else:
-        print('Toggle')
         btn = ToggleButton(text)
 
     btn.setFont(default_font())
@@ -46,11 +44,11 @@ def set_button_bg(btn: QPushButton, color: str, reset: bool = False) -> None:
     color_to = color
     if reset:
         color_to = '#31363b'
-    btnStyle = (
+    btn_style = (
         'border-radius: 7;'
         f'background-color: {color_to};'
     )
-    btn.setStyleSheet(btnStyle)
+    btn.setStyleSheet(btn_style)
 
 # Simple value validators
 def validate_float(value: str) -> bool:

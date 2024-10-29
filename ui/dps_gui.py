@@ -1,12 +1,13 @@
 """DPS-Control GUI"""
 import sys
 from PySide6.QtWidgets import *
-from PySide6.QtCore import Qt, QFile, QTextStream, QThreadPool, Slot
+from PySide6.QtCore import Qt, QFile, QTextStream, QThreadPool, Slot, QRunnable
 from custom_widgets import dialbar, statusindicator
 from custom_widgets.statusindicator import StatusIndicator
 from lib.dps_controller import DPSController
 from lib.dps_status import DPSStatus
 from lib.utils import button_factory, get_label, get_lineedit, ivoltsf, iampsf, iwattsf
+# noinspection PyUnresolvedReferences
 import ui.breeze_pyside6
 
 # Names for UI objects we use
@@ -23,6 +24,8 @@ CONBUTTON_NAME = 'button_connect'
 PWRBUTTON_NAME = 'button_power'
 CLIEDIT_NAME = 'cli_edit'
 PORT_NAME = 'port_edit'
+VCONTROL_NAME = 'volt_control'
+ACONTROL_NAME = 'amp_control'
 
 class QVLine(QFrame):
     def __init__(self) -> None:
@@ -40,14 +43,40 @@ class QHLine(QFrame):
         self.setLineWidth(3)
         self.setMidLineWidth(1)
 
+class EventUpdater(QRunnable):
+    """Worker thread class to get events and update UI"""
+    def __init__(self, controller: DPSController, callback: callable):
+        super(EventUpdater, self).__init__()
+        self.__controller = controller
+        self.__update_callback = callback
+    @Slot()
+    def run(self):
+        """Handle event from controller, render status into GUI components"""
+        data: DPSStatus
+        while True:
+            data = self.__controller.event_queue.get()
+            if data is None:
+                #print('Event handler quitting...')
+                break
+            self.__update_callback(data)
+
 class DPSMainWindow(QMainWindow):
     def __init__(self, controller: DPSController):
         super().__init__()
+        self.thread_manager = QThreadPool()
         self.setWindowTitle('DPS Controller')
         self.setMinimumSize(800, 600)
         self.log_pane = QPlainTextEdit()
         self.controller = controller
         self.__running = False
+        self.__flag_update_controls = True
+        self.eventupdater = EventUpdater(self.controller, self.update_status)
+
+    @staticmethod
+    def __retstr(code: bool, msg: str) -> str:
+        """String representation of return code and associated message"""
+        retcode = 'Success' if code else 'Failed'
+        return f'{retcode}: {msg}'
 
     # Private UI setup methods
     def __get_setup_panel(self) -> QVBoxLayout:
@@ -120,7 +149,7 @@ class DPSMainWindow(QMainWindow):
         layout.addWidget(button_connect)
         return layout
 
-    def __controls_changed(self, *args) -> None:
+    def __controls_changed(self) -> None:
         """Handle signal from control UI element"""
         if self.controller.status.connected:
             self.button_set.setEnabled(True)
@@ -132,11 +161,13 @@ class DPSMainWindow(QMainWindow):
         # Dials for Volts and Amps
         va_dial_layout = QHBoxLayout()
         volt_control = dialbar.DialBar('V', 4)
-        volt_control.setObjectName('volt_control')
+        volt_control.setObjectName(VCONTROL_NAME)
         amp_control = dialbar.DialBar('A', 5)
-        amp_control.setObjectName('amp_control')
-        volt_control.set_range(0.0, 3.0)
-        amp_control.set_range(0,5)
+        amp_control.setObjectName(ACONTROL_NAME)
+        vmax = self.controller.get_vmax()
+        amax = self.controller.get_amax()
+        volt_control.set_range(0, vmax)
+        amp_control.set_range(0, amax)
 
         # Connect change signals
         volt_control.valuesChanged.connect(self.__controls_changed)
@@ -231,8 +262,8 @@ class DPSMainWindow(QMainWindow):
         button_onoff.setEnabled(False)
 
         button_onoff.setSizePolicy(
-            QSizePolicy.MinimumExpanding,
-            QSizePolicy.Fixed
+            QSizePolicy.Policy.MinimumExpanding,
+            QSizePolicy.Policy.Fixed
         )
         #self.button_set.setMinimumWidth(150)
         button_onoff.clicked.connect(self, self.__handle_buttons)
@@ -252,6 +283,7 @@ class DPSMainWindow(QMainWindow):
 
         return layout
 
+    # noinspection PyMethodMayBeStatic
     def __get_header_panel(self) -> QHBoxLayout:
         """This is header row for names of panels"""
         layout = QHBoxLayout()
@@ -298,12 +330,12 @@ class DPSMainWindow(QMainWindow):
         """This is the CLI interface on very bottom"""
         layout = QHBoxLayout()
 
-        cliLabel: QLabel = get_label('CLI:', 12)
+        cli_label: QLabel = get_label('CLI:', 12)
         cli_input: QLineEdit = get_lineedit('', 14, 256, Qt.FocusPolicy.StrongFocus)
         cli_input.setObjectName(CLIEDIT_NAME)
         cli_input.setEnabled(True)
         cli_input.editingFinished.connect(self.__handle_cli_command)
-        layout.addWidget(cliLabel)
+        layout.addWidget(cli_label)
         layout.addWidget(cli_input)
         return layout
 
@@ -312,93 +344,112 @@ class DPSMainWindow(QMainWindow):
         self.__running = False
 
     # Private functional methods
+    def __connected_success(self):
+        """Do stuff when connection has been successful"""
+        connected_ind = self.findChild(StatusIndicator, CONN_NAME)
+        connected_ind.setEnabled(True)
+        button_set = self.findChild(QPushButton, SETBUTTON_NAME)
+        button_set.setEnabled(True)
+        cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
+        cli_edit.setEnabled(True)
+        button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
+        button_pwr.setEnabled(True)
+        button_conn = self.findChild(QPushButton, CONBUTTON_NAME)
+        button_conn.setEnabled(False)
+
     def __print_cli_help(self):
         """Print help about available CLI commands"""
         self.log('-----------------------------------------------------------')
         self.log('Available commands:')
         self.log('    a  <value>\tSet current to value (float)')
         self.log('    v  <value>\tSet voltage to value (float)')
-        self.log('    va <value> <value> Set voltage and current to value (float)')
-        self.log('    x\tToggle output power ON/OFF.')
-        self.log('    p  <port>\tSet device port to <port> eg. /dev/ttyUSB0')
-        self.log('    h\tPrint this text')
-        self.log('    q\tQuit program')
+        self.log('    va <value> <value> \tSet voltage and current to value (float)')
+        self.log('    x\t\tToggle output power ON/OFF.')
+        self.log('    h\t\tPrint this text')
+        self.log('    q\t\tQuit program')
 
     def __handle_cli_command(self) -> None:
         """Get input from CLI edit box and send it as command to the controller"""
         cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
         command = cli_edit.text()
+        main_cmd = command.split()[0] if len(command.split()) > 1 else command
         if len(command):
-            #print(command)
-            #self.log(msg)
-            # Some local command handling for UI
-            if command == 'q':
+            # Commands which can be used before connection
+            if main_cmd == 'q':
                 self.close()
-            elif command == 'h':
+            elif main_cmd == 'p':
+                self.log('Port command is not supported in GUI. Please us dps_control.cfg configuration file.')
+                cli_edit.setText('')
+                return
+            elif main_cmd == 'h':
                 self.__print_cli_help()
                 cli_edit.setText('')
                 return
 
+            # Let controller parse the command and act upon it
             ret, msg = self.controller.parse_command(command)
             cli_edit.setText('')
-            self.__update_status(self.controller.status)
 
+            # If we connected through CLI, update UI accordingly
+            if main_cmd == 'c':
+                if ret:
+                    self.__connected_success()
+            elif main_cmd == 'x':
+                if ret:
+                    button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
+                    button_pwr.setChecked(not button_pwr.isChecked())
+            elif main_cmd == 'i':
+                if ret:
+                    self.log('DPS5005 registers:')
+
+            # Update GUI control values after CLI command so they stay in sync
+            self.update_status(self.controller.status)
+            self.__flag_update_controls = True
+            self.log(self.__retstr(ret, msg))
 
     def __handle_buttons(self) -> None:
         """Handle button presses from UI, form command for controller"""
-        cmd: str
+        cmd: str = ''
         sender = self.sender()
         sender_name = sender.objectName()
-        print(sender_name)
         if sender_name == PWRBUTTON_NAME:
             cmd = 'x'
-            if self.controller.get_power_state() is False:
-                self.log('Switching power ON')
-            else:
-                self.log('Switching power OFF')
-            # TODO:
-            #  * Warn about initial settings?
-            #  * Check that power is actually on
-            #  * Set toggle button status accordingly
         elif sender_name == CONBUTTON_NAME:
             self.log('Connecting')
             cmd: str = f'c {self.controller.status.port}'
-
             ret, msg = self.controller.parse_command(cmd)
             # We are connected, light LED
             if ret:
-                sender.setEnabled(False)
-                connected_ind = self.findChild(StatusIndicator, CONN_NAME)
-                connected_ind.setEnabled(True)
-                button_set = self.findChild(QPushButton, SETBUTTON_NAME)
-                button_set.setEnabled(True)
-                cli_edit = self.findChild(QLineEdit, CLIEDIT_NAME)
-                cli_edit.setEnabled(True)
-                button_pwr = self.findChild(QPushButton, PWRBUTTON_NAME)
-                button_pwr.setEnabled(True)
-            else:
-                self.log(msg)
+                self.__connected_success()
+            self.log(self.__retstr(ret, msg))
             return
-
-            # TODO:
-            #  * Check if connection was successful
-            #  * Set connected LED accordingly
-            #  * No disconnect option necessary
         elif sender_name == SETBUTTON_NAME:
-            vcontrol = self.findChild(dialbar.DialBar, name = 'volt_control')
-            acontrol = self.findChild(dialbar.DialBar, name = 'amp_control')
+            vcontrol = self.findChild(dialbar.DialBar, name = VCONTROL_NAME)
+            acontrol = self.findChild(dialbar.DialBar, name = ACONTROL_NAME)
             vstr = vcontrol.get_value()
             astr = acontrol.get_value()
             cmd: str = f'va {vstr} {astr}'
-            self.log(f'Set output: {vstr} V {astr} A')
-            # TODO:
-            #  * Check minimum and maximum limits and cancel if necessary
             sender.setEnabled(False)
         # Send command
-        self.controller.parse_command(cmd)
+        ret, msg = self.controller.parse_command(cmd)
+        self.log(self.__retstr(ret, msg))
 
-    def __update_status(self, status: DPSStatus):
+    def __update_controls(self, volts: int, amps: int):
+        """Update control dials to be in sync with settings, they may
+        be set in CLI as well
+        """
+        vcontrol = self.findChild(dialbar.DialBar, name=VCONTROL_NAME)
+        acontrol = self.findChild(dialbar.DialBar, name=ACONTROL_NAME)
+        vcontrol.set_value(volts)
+        acontrol.set_value(amps)
+
+    def update_status(self, status: DPSStatus):
         """Update UI according to status information"""
+        # On first update, set the control values to what has been set in device
+        if self.__flag_update_controls:
+            self.__update_controls(status.registers.u_set * 10, status.registers.i_set)
+            self.__flag_update_controls = False
+
         vout = self.findChild(QLineEdit, VOUT_NAME)
         aout = self.findChild(QLineEdit, AOUT_NAME)
         pout = self.findChild(QLineEdit, POUT_NAME)
@@ -423,52 +474,34 @@ class DPSMainWindow(QMainWindow):
 
         self.update()
 
-
-
-
-    @Slot()
-    def __handle_events(self):
-        """Handle event from controller, render status into GUI components"""
-        while self.__running:
-            print('Waiting for event to appear...')
-            data = self.controller.event_queue.get()
-            if data is None:
-                print('Event handler quitting...')
-                break
-            print(data)
-            self.__update_status(data)
-
-
     # Public methods
     def setup(self) -> None:
         """Setup UI"""
         # Main vertical layout
-        mainVLayout = QVBoxLayout()
+        main_v_layout = QVBoxLayout()
 
         # Two horizontal boxes, one for headers, one for controls etc
-        headerHLayout: QHBoxLayout = self.__get_header_panel()
-        panelHLayout: QHBoxLayout = self.__get_panel_layout()
-        logHLayout: QHBoxLayout = self.__get_log_layout()
-        cliHLayout: QHBoxLayout = self.__get_cli_layout()
+        header_h_layout: QHBoxLayout = self.__get_header_panel()
+        panel_h_layout: QHBoxLayout = self.__get_panel_layout()
+        log_h_layout: QHBoxLayout = self.__get_log_layout()
+        cli_h_layout: QHBoxLayout = self.__get_cli_layout()
 
-        mainVLayout.addLayout(headerHLayout, 1)
-        mainVLayout.addLayout(panelHLayout, 5)
-        logLabel: QLabel = get_label('Log:', 12)
-        mainVLayout.addWidget(logLabel)
-        mainVLayout.addLayout(logHLayout, 3)
+        main_v_layout.addLayout(header_h_layout, 1)
+        main_v_layout.addLayout(panel_h_layout, 5)
+        log_label: QLabel = get_label('Log:', 12)
+        main_v_layout.addWidget(log_label)
+        main_v_layout.addLayout(log_h_layout, 3)
 
-        mainVLayout.addLayout(cliHLayout, 1)
+        main_v_layout.addLayout(cli_h_layout, 1)
 
         # Set up event handling from controller
-        print('Starting event thread')
-        self.thread_manager = QThreadPool()
         self.__running = True
-        self.thread_manager.start(self.__handle_events)
+        self.thread_manager.start(self.eventupdater)
 
         # Central widget
-        centralWidget = QWidget()
-        centralWidget.setLayout(mainVLayout)
-        self.setCentralWidget(centralWidget)
+        central_widget = QWidget()
+        central_widget.setLayout(main_v_layout)
+        self.setCentralWidget(central_widget)
 
     def log(self, txt: str) -> None:
         """Append log message to log panel"""
@@ -477,11 +510,12 @@ class DPSMainWindow(QMainWindow):
 def set_styles(app: QApplication) -> None:
     """Set style from breeze themes"""
     file = QFile(":/dark/stylesheet.qss")
-    file.open(QFile.ReadOnly | QFile.Text)
+    file.open(QFile.OpenModeFlag.ReadOnly | QFile.OpenModeFlag.Text)
     stream = QTextStream(file)
     app.setStyleSheet(stream.readAll())
 
-def DPSGui(controller: DPSController) -> None:
+
+def dps_gui(controller: DPSController) -> None:
     app = QApplication(sys.argv)
     set_styles(app)
     window = DPSMainWindow(controller)
@@ -493,4 +527,4 @@ def DPSGui(controller: DPSController) -> None:
     app.exec()
 
 if __name__ == '__main__':
-    DPSGui()
+    """The application should be run from main.py"""

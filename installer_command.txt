@@ -1,0 +1,1 @@
+pyinstaller -F -n DPS-Control --windowed --paths venv/lib/python3.11/site-packages --add-data dps_control.cfg:. -i test.icns main.py

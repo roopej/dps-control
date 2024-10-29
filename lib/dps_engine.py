@@ -4,6 +4,7 @@ Modbus protocol
 """
 
 from typing import List, Union
+from threading import Lock
 import minimalmodbus
 from minimalmodbus import ModbusException, NoResponseError
 from serial import SerialException
@@ -12,6 +13,9 @@ from .dps_status import DPSRegisters
 
 # Converters from int -> float
 from .utils import iampsf, ivoltsf, iwattsf
+
+# Use lock to prevent simultaneous R/W access to DPS device
+lock = Lock()
 
 class DPSRegister(IntEnum):
     """Register addresses of DPS5005"""
@@ -28,8 +32,8 @@ class DPSEngine:
     """Class interacting with DPS5005 through Modbus protocol"""
     def __init__(self, debug : bool = False) -> None:
         """Constructor"""
+        self.instrument = None
         self.registers = DPSRegisters()
-        self.instrument: minimalmodbus.Instrument
         self.debug: bool = debug
 
     def connect(self, port: str, slave: int, baud_rate: int) -> tuple[bool, str]:
@@ -44,10 +48,8 @@ class DPSEngine:
             self.instrument.debug = self.debug
             print(self.instrument)
             # Connection test
-            val = self.__read_register(DPSRegister.MODEL, 0)
-            print (val)
-            # Set power off if connection test succeeds
-            self.set_power(False)
+            val = self.__read_register(DPSRegister.PWR_ONOFF, 0)
+            self.registers.onoff = val
         except (SerialException, ModbusException, NoResponseError) as error:
             print(error)
             return False, 'Serial exception'
@@ -114,7 +116,7 @@ class DPSEngine:
         """Get dump of status variables of DPS"""
         # TODO: Move to DPSStatus() __repr__ __str__?
         self.get_registers()
-        ret_str = str()
+        ret_str = '\n'
         ret_str += f'U-Set:\t\t{self.registers.u_set / 100.0}\n'
         ret_str += f'I-Set:\t\t{self.registers.i_set / 1000.0}\n'
         ret_str += f'U-Out:\t\t{self.registers.u_out / 100.0}\n'
@@ -122,12 +124,12 @@ class DPSEngine:
         ret_str += f'P-Out:\t\t{self.registers.p_out / 100.0}\n'
         ret_str += f'U-In:\t\t{self.registers.u_in / 100.0}\n'
         ret_str += f'Locked:\t\t{self.registers.lock}\n'
-        ret_str += f'Protected:\t{self.registers.protect}\n'
+        ret_str += f'Protected:\t\t{self.registers.protect}\n'
         ret_str += f'CV/CC:\t\t{self.registers.cvcc}\n'
         ret_str += f'ONOFF:\t\t{self.registers.onoff}\n'
-        ret_str += f'Backlight:\t{self.registers.b_led}\n'
+        ret_str += f'Backlight:\t\t{self.registers.b_led}\n'
         ret_str += f'Model:\t\t{self.registers.model}\n'
-        ret_str += f'Firmware:\t{self.registers.version / 10.0}\n'
+        ret_str += f'Firmware:\t\t{self.registers.version / 10.0}\n'
         return True, ret_str
 
     def get_registers(self) -> DPSRegisters or None:
@@ -145,28 +147,34 @@ class DPSEngine:
         reg.lock = reg_list[6]
         reg.protect = reg_list[7]
         reg.cvcc = reg_list[8]
-        reg.model = reg_list[9]
-        reg.version = reg_list[10]
+        reg.onoff = reg_list[9]
+        reg.b_led = reg_list[10]
+        reg.model = reg_list[11]
+        reg.version = reg_list[12]
         return reg
 
     # Private methods
     # Communication through Modbus, catch exceptions on these (TODO), used internally by class
     def __write_register(self, address: int, value: Union[int,float], num_decimals: int) -> None:
         """Write single register at address"""
-        self.instrument.write_register(address, value=value, number_of_decimals=num_decimals)
+        with lock:
+            self.instrument.write_register(address, value=value, number_of_decimals=num_decimals)
 
     def __write_registers(self, address: int, values: List[int]) -> None:
         """Write list of registers into address"""
-        self.instrument.write_registers(registeraddress=address, values=values)
+        with lock:
+            self.instrument.write_registers(registeraddress=address, values=values)
 
     def __read_register(self, address: int, num_decimals: int) -> Union[int, float]:
         """Read single register from address"""
-        retval: int | float = self.instrument.read_register(address, num_decimals)
+        with lock:
+            retval: int | float = self.instrument.read_register(address, num_decimals)
         return retval
 
     def __read_registers(self, address: int, number: int) -> List[int]:
         """Read number of registers starting from address"""
-        regs : List[int] = self.instrument.read_registers(registeraddress=address,
+        with lock:
+            regs : List[int] = self.instrument.read_registers(registeraddress=address,
                                                    number_of_registers=number)
         return regs
 
