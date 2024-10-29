@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QLabel
-from PySide6.QtGui import QPainter, QColor
-from PySide6.QtCore import QPoint, Qt
+from PySide6.QtGui import QPainter, QColor, QBrush
+from PySide6.QtCore import QPoint
 
 class StatusIndicator(QLabel):
     """Simple status indicator, LED-like"""
@@ -19,11 +19,11 @@ class StatusIndicator(QLabel):
     def paintEvent(self, event):
         """Handle paint event"""
         paint = QPainter(self)
-        paint.setRenderHint(QPainter.Antialiasing)
-        paint.setBrush(Qt.transparent)
+        paint.setRenderHint(QPainter.RenderHint.Antialiasing)
+        paint.setBrush(QBrush(QColor(0,0,0,255)))
         radx = self.width()/2
         rady = self.height()/2
-        paint.setPen(Qt.black)
-        center = QPoint(self.width()/2, self.height()/2)
+        paint.setPen(QColor('black'))
+        center = QPoint(int(self.width()/2), int(self.height()/2))
         paint.setBrush(self.enabledColor if self.enabled else self.disabledColor)
         paint.drawEllipse(center, radx, rady)
