@@ -11,7 +11,7 @@ device is handled by the simple minimalmodbus library.
 ## Configuration
 ### Requirements
 The application has been tested with Python 3.11.9. It will run (probably) on any version where PySide6 dependency can 
-be installed.
+be installed. The latest Python 3.13 has still problems with PySide and will be supported in near future.
 
 ### General
 Please check first `dps_control.cfg` file. It has very few settings but they are important as you need to tell the 

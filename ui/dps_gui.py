@@ -64,7 +64,7 @@ class DPSMainWindow(QMainWindow):
     def __init__(self, controller: DPSController):
         super().__init__()
         self.thread_manager = QThreadPool()
-        self.setWindowTitle('DPS Controller')
+        self.setWindowTitle('DPS-Control')
         self.setMinimumSize(800, 600)
         self.log_pane = QPlainTextEdit()
         self.controller = controller
@@ -378,7 +378,7 @@ class DPSMainWindow(QMainWindow):
             if main_cmd == 'q':
                 self.close()
             elif main_cmd == 'p':
-                self.log('Port command is not supported in GUI. Please us dps_control.cfg configuration file.')
+                self.log('Port command is not supported in GUI. Please edit dps_control.cfg configuration file.')
                 cli_edit.setText('')
                 return
             elif main_cmd == 'h':
