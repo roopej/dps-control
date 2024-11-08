@@ -323,10 +323,11 @@ class DPSMainWindow(QMainWindow):
         layout.addLayout(self.__get_output_panel())
         return layout
 
-    def __get_single_preset_layout(self, preset_id: int) -> QHBoxLayout:
+    def __get_single_preset_layout(self, preset_id: int) -> QVBoxLayout:
         """This represents single preset with two buttons and values stored"""
         preset: str = str(preset_id)
-        layout = QHBoxLayout()
+        layout = QVBoxLayout()
+        layout_main = QHBoxLayout()
         layout_buttons = QVBoxLayout()
         layout_buttons.setSpacing(0)
         layout_values = QVBoxLayout()
@@ -364,9 +365,14 @@ class DPSMainWindow(QMainWindow):
         layout_values.addWidget(label_volts)
         layout_values.addWidget(label_amps)
         layout_values.addWidget(label_watts)
-        layout.addLayout(layout_buttons)
-        layout.addLayout(layout_values)
-        layout.addWidget(QVLine())
+        layout_main.addLayout(layout_buttons)
+        layout_main.addLayout(layout_values)
+        layout_main.addWidget(QVLine())
+
+        label_preset = QLabel(f'Preset {preset}')
+        label_preset.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout.addWidget(label_preset)
+        layout.addLayout(layout_main)
         return layout
 
 
@@ -551,6 +557,7 @@ class DPSMainWindow(QMainWindow):
 
         main_v_layout.addLayout(header_h_layout, 1)
         main_v_layout.addLayout(panel_h_layout, 5)
+        main_v_layout.addWidget(QHLine())
         main_v_layout.addLayout(preset_h_layout, 2)
         log_label: QLabel = get_label('Log:', 12)
         main_v_layout.addWidget(log_label)
