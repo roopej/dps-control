@@ -26,6 +26,12 @@ CLIEDIT_NAME = 'cli_edit'
 PORT_NAME = 'port_edit'
 VCONTROL_NAME = 'volt_control'
 ACONTROL_NAME = 'amp_control'
+PRESET_BUTTON_R = 'preset_button_r'
+PRESET_BUTTON_W = 'preset_button_w'
+PRESET_LABEL_V = 'preset_label_v'
+PRESET_LABEL_A = 'preset_label_a'
+PRESET_LABEL_W = 'preset_label_w'
+
 
 class QVLine(QFrame):
     def __init__(self) -> None:
@@ -317,6 +323,62 @@ class DPSMainWindow(QMainWindow):
         layout.addLayout(self.__get_output_panel())
         return layout
 
+    def __get_single_preset_layout(self, preset_id: int) -> QHBoxLayout:
+        """This represents single preset with two buttons and values stored"""
+        preset: str = str(preset_id)
+        layout = QHBoxLayout()
+        layout_buttons = QVBoxLayout()
+        layout_buttons.setSpacing(0)
+        layout_values = QVBoxLayout()
+
+        style_read = (
+                "QPushButton {"
+                "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #009900, stop: 1 #00bb00);"
+                "border-radius: 7;"
+                "}"
+        )
+
+        style_write = (
+                "QPushButton {"
+                "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #990000, stop: 1 #bb0000);"
+                "border-radius: 7;"
+                "}"
+        )
+
+        button_read = QPushButton('R')
+        button_read.setObjectName(f'{PRESET_BUTTON_R}_{preset}')
+        button_read.setContentsMargins(0,0,0,0)
+        button_read.setStyleSheet(style_read)
+        button_write = QPushButton('W')
+        button_write.setObjectName(f'{PRESET_BUTTON_W}_{preset}')
+        button_write.setContentsMargins(0, 0, 0, 0)
+        button_write.setStyleSheet(style_write)
+        layout_buttons.addWidget(button_read)
+        layout_buttons.addWidget(button_write)
+        label_volts = QLabel('0.0 V')
+        label_volts.setObjectName(f'{PRESET_LABEL_V}_{preset}')
+        label_amps = QLabel('0.0 A')
+        label_amps.setObjectName(f'{PRESET_LABEL_A}_{preset}')
+        label_watts = QLabel('0.0 W')
+        label_watts.setObjectName(f'{PRESET_LABEL_W}_{preset}')
+        layout_values.addWidget(label_volts)
+        layout_values.addWidget(label_amps)
+        layout_values.addWidget(label_watts)
+        layout.addLayout(layout_buttons)
+        layout.addLayout(layout_values)
+        layout.addWidget(QVLine())
+        return layout
+
+
+    def __get_preset_layout(self) -> QHBoxLayout:
+        """This is the box for preset buttons"""
+        layout = QHBoxLayout()
+        for n in range(1, 6):
+            preset = self.__get_single_preset_layout(n)
+            layout.addLayout(preset)
+        return layout
+
+
     def __get_log_layout(self) -> QHBoxLayout:
         """This is the (usually) bottom part of the screen for log info"""
         layout = QHBoxLayout()
@@ -483,11 +545,13 @@ class DPSMainWindow(QMainWindow):
         # Two horizontal boxes, one for headers, one for controls etc
         header_h_layout: QHBoxLayout = self.__get_header_panel()
         panel_h_layout: QHBoxLayout = self.__get_panel_layout()
+        preset_h_layout: QHBoxLayout = self.__get_preset_layout()
         log_h_layout: QHBoxLayout = self.__get_log_layout()
         cli_h_layout: QHBoxLayout = self.__get_cli_layout()
 
         main_v_layout.addLayout(header_h_layout, 1)
         main_v_layout.addLayout(panel_h_layout, 5)
+        main_v_layout.addLayout(preset_h_layout, 2)
         log_label: QLabel = get_label('Log:', 12)
         main_v_layout.addWidget(log_label)
         main_v_layout.addLayout(log_h_layout, 3)
