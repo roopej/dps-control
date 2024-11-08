@@ -332,16 +332,17 @@ class DPSMainWindow(QMainWindow):
         layout_buttons.setSpacing(0)
         layout_values = QVBoxLayout()
 
+        # Style sheets for read and write buttons
         style_read = (
                 "QPushButton {"
-                "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #009900, stop: 1 #00bb00);"
+                "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #007700, stop: 1 #009900);"
                 "border-radius: 7;"
                 "}"
         )
 
         style_write = (
                 "QPushButton {"
-                "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #990000, stop: 1 #bb0000);"
+                "background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #770000, stop: 1 #990000);"
                 "border-radius: 7;"
                 "}"
         )
@@ -356,11 +357,15 @@ class DPSMainWindow(QMainWindow):
         button_write.setStyleSheet(style_write)
         layout_buttons.addWidget(button_read)
         layout_buttons.addWidget(button_write)
-        label_volts = QLabel('0.0 V')
+        presets = self.controller.get_presets()
+        volts = presets[preset_id]['v'];
+        label_volts = QLabel(f'{volts:.2f} V')
         label_volts.setObjectName(f'{PRESET_LABEL_V}_{preset}')
-        label_amps = QLabel('0.0 A')
+        amps = presets[preset_id]['a'];
+        label_amps = QLabel(f'{amps:.3f} A')
         label_amps.setObjectName(f'{PRESET_LABEL_A}_{preset}')
-        label_watts = QLabel('0.0 W')
+        watts = presets[preset_id]['w'];
+        label_watts = QLabel(f'{watts:.2f} W')
         label_watts.setObjectName(f'{PRESET_LABEL_W}_{preset}')
         layout_values.addWidget(label_volts)
         layout_values.addWidget(label_amps)

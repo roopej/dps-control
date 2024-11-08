@@ -33,10 +33,11 @@ VERSION: str = '0.9_beta1'
 
 class DPSController:
     """Handles logic and parsing commands"""
-    def __init__(self, conf) -> None:
+    def __init__(self, conf, presets) -> None:
         self.event_thread = None
         self.status: DPSStatus = DPSStatus()
         self.conf = conf
+        self.presets = presets
         self.status.port = conf['connection']['tty_port']
         self.status.slave = conf['connection']['slave']
         self.status.baud_rate = conf['connection']['baud_rate']
@@ -57,6 +58,10 @@ class DPSController:
     def get_version() -> str:
         """Get version string"""
         return VERSION
+
+    def get_presets(self):
+        """Get presets"""
+        return self.presets
 
     def get_port(self) -> str:
         """Get port as string"""

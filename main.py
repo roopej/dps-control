@@ -12,9 +12,9 @@ def main():
     args: list[str] = sys.argv
 
     # Try reading configuration
+    bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
     try:
         config_file = 'dps_control.cfg'
-        bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
         path_to_config = os.path.abspath(os.path.join(bundle_dir, config_file))
         with open(path_to_config, 'r') as file:
             conf = safe_load(file)
@@ -25,8 +25,17 @@ def main():
     if conf['misc']['debug']:
         print (conf)
 
+    # Read preset configuration
+    try:
+        preset_file = str(conf['misc']['preset_filename'])
+        path_to_presets = os.path.abspath(os.path.join(bundle_dir, preset_file))
+        with open(path_to_presets, 'r+') as file:
+            presets = safe_load(file)
+    except YAMLError as error:
+        print(f'Error parsing presets file {error}')
+
     # Create controller
-    controller = DPSController(conf)
+    controller = DPSController(conf, presets)
 
     # Start CLI if requested
     if len(args) > 1 and args[1] == '--cli':
