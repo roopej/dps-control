@@ -358,15 +358,18 @@ class DPSMainWindow(QMainWindow):
         layout_buttons.addWidget(button_read)
         layout_buttons.addWidget(button_write)
         presets = self.controller.get_presets()
-        volts = presets[preset_id]['v'];
+        volts = presets[preset_id].voltage
         label_volts = QLabel(f'{volts:.2f} V')
         label_volts.setObjectName(f'{PRESET_LABEL_V}_{preset}')
-        amps = presets[preset_id]['a'];
+        label_volts.setAlignment(Qt.AlignmentFlag.AlignRight)
+        amps = presets[preset_id].current;
         label_amps = QLabel(f'{amps:.3f} A')
         label_amps.setObjectName(f'{PRESET_LABEL_A}_{preset}')
-        watts = presets[preset_id]['w'];
+        label_amps.setAlignment(Qt.AlignmentFlag.AlignRight)
+        watts = presets[preset_id].power;
         label_watts = QLabel(f'{watts:.2f} W')
         label_watts.setObjectName(f'{PRESET_LABEL_W}_{preset}')
+        label_watts.setAlignment(Qt.AlignmentFlag.AlignRight)
         layout_values.addWidget(label_volts)
         layout_values.addWidget(label_amps)
         layout_values.addWidget(label_watts)
@@ -384,7 +387,7 @@ class DPSMainWindow(QMainWindow):
     def __get_preset_layout(self) -> QHBoxLayout:
         """This is the box for preset buttons"""
         layout = QHBoxLayout()
-        for n in range(1, 6):
+        for n in range(0, 5):
             preset = self.__get_single_preset_layout(n)
             layout.addLayout(preset)
         return layout

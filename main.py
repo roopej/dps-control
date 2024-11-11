@@ -3,6 +3,7 @@ import sys
 import os
 from yaml import safe_load, YAMLError
 from lib.dps_controller import DPSController
+from lib.dps_preset import DPSPreset, read_presets, write_presets
 from ui.dps_cli import DPSCli
 from ui.dps_gui import dps_gui
 
@@ -25,12 +26,12 @@ def main():
     if conf['misc']['debug']:
         print (conf)
 
-    # Read preset configuration
+    # Read preset configuration, convert to list of DPSPreset
+    presets: list[DPSPreset] = []
     try:
         preset_file = str(conf['misc']['preset_filename'])
-        path_to_presets = os.path.abspath(os.path.join(bundle_dir, preset_file))
-        with open(path_to_presets, 'r+') as file:
-            presets = safe_load(file)
+        presets = read_presets(f'../{preset_file}')
+
     except YAMLError as error:
         print(f'Error parsing presets file {error}')
 

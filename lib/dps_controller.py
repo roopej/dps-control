@@ -20,16 +20,19 @@ Monitor toggle ON/OFF:      m
 
 """
 
+import os
+import sys
 import threading
 from typing import Callable
 from queue import SimpleQueue
 from time import sleep
 
+from lib.dps_preset import DPSPreset
 from lib.dps_status import DPSStatus
 from lib.dps_engine import DPSEngine
 from lib.utils import *
 
-VERSION: str = '0.9_beta1'
+VERSION: str = '1.0_beta1'
 
 class DPSController:
     """Handles logic and parsing commands"""
@@ -59,9 +62,23 @@ class DPSController:
         """Get version string"""
         return VERSION
 
-    def get_presets(self):
+    def get_presets(self) -> list[DPSPreset]:
         """Get presets"""
         return self.presets
+
+    def write_presets(self):
+        """Write presets to a file"""
+        preset_file = str(self.conf['misc']['preset_filename'])
+        bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
+        path_to_presets = os.path.abspath(os.path.join(bundle_dir, preset_file))
+
+
+    def update_preset(self, preset: DPSPreset):
+        """Update preset with new values"""
+        self.presets[preset.index]['v'] = preset.voltage
+        self.presets[preset.index]['a'] = preset.current
+        self.presets[preset.index]['w'] = preset.power
+        self.write_presets()
 
     def get_port(self) -> str:
         """Get port as string"""
