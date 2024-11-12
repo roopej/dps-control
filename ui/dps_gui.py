@@ -513,18 +513,21 @@ class DPSMainWindow(QMainWindow):
         elif sender_name.startswith(PRESET_BUTTON_PREFIX):
             preset_id = int(sender_name[-1])
             presets = self.controller.get_presets()
-            if sender_name.startswith(PRESET_BUTTON_R):
-                volts = presets[preset_id].voltage
-                amps = presets[preset_id].current
-                cmd: str = f'va {volts} {amps}'
-            else:
+
+            # Handle write of new preset values and return without command parsing
+            if sender_name.startswith(PRESET_BUTTON_W):
                 vcontrol = self.findChild(dialbar.DialBar, name=VCONTROL_NAME)
                 acontrol = self.findChild(dialbar.DialBar, name=ACONTROL_NAME)
                 vstr = vcontrol.get_value()
                 astr = acontrol.get_value()
                 presets[preset_id].voltage = int(vstr)
                 presets[preset_id].current = int(astr)
-                write_presets()
+                self.controller.update_presets()
+                return
+            else:
+                volts = presets[preset_id].voltage
+                amps = presets[preset_id].current
+                cmd: str = f'va {volts} {amps}'
 
         # Send command
         ret, msg = self.controller.parse_command(cmd)

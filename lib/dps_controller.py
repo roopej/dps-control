@@ -27,7 +27,7 @@ from typing import Callable
 from queue import SimpleQueue
 from time import sleep
 
-from lib.dps_preset import DPSPreset
+from lib.dps_preset import DPSPreset, write_presets, read_presets
 from lib.dps_status import DPSStatus
 from lib.dps_engine import DPSEngine
 from lib.utils import *
@@ -57,28 +57,27 @@ class DPSController:
         self.a_max = self.conf['limits']['max_current']
         self.a_min = self.conf['limits']['min_current']
 
+        # Get initial presets
+        self.read_presets_from_file()
+
     @staticmethod
     def get_version() -> str:
         """Get version string"""
         return VERSION
 
+    def read_presets_from_file(self):
+        """Read presets from file"""
+        fname = str(self.conf['misc']['preset_filename'])
+        self.presets = read_presets(f'../{fname}')
+
     def get_presets(self) -> list[DPSPreset]:
         """Get presets"""
         return self.presets
 
-    def write_presets(self):
+    def update_presets(self) -> None:
         """Write presets to a file"""
         preset_file = str(self.conf['misc']['preset_filename'])
-        bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
-        path_to_presets = os.path.abspath(os.path.join(bundle_dir, preset_file))
-
-
-    def update_preset(self, preset: DPSPreset):
-        """Update preset with new values"""
-        self.presets[preset.index]['v'] = preset.voltage
-        self.presets[preset.index]['a'] = preset.current
-        self.presets[preset.index]['w'] = preset.power
-        self.write_presets()
+        write_presets(preset_file, self.presets)
 
     def get_port(self) -> str:
         """Get port as string"""
