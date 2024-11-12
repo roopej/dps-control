@@ -5,6 +5,7 @@ from PySide6.QtCore import Qt, QFile, QTextStream, QThreadPool, Slot, QRunnable
 from custom_widgets import dialbar, statusindicator
 from custom_widgets.statusindicator import StatusIndicator
 from lib.dps_controller import DPSController
+from lib.dps_preset import write_presets
 from lib.dps_status import DPSStatus
 from lib.utils import button_factory, get_label, get_lineedit, ivoltsf, iampsf, iwattsf
 # noinspection PyUnresolvedReferences
@@ -28,6 +29,7 @@ VCONTROL_NAME = 'volt_control'
 ACONTROL_NAME = 'amp_control'
 PRESET_BUTTON_R = 'preset_button_r'
 PRESET_BUTTON_W = 'preset_button_w'
+PRESET_BUTTON_PREFIX = 'preset_button'
 PRESET_LABEL_V = 'preset_label_v'
 PRESET_LABEL_A = 'preset_label_a'
 PRESET_LABEL_W = 'preset_label_w'
@@ -351,10 +353,12 @@ class DPSMainWindow(QMainWindow):
         button_read.setObjectName(f'{PRESET_BUTTON_R}_{preset}')
         button_read.setContentsMargins(0,0,0,0)
         button_read.setStyleSheet(style_read)
+        button_read.clicked.connect(self, self.__handle_buttons)
         button_write = QPushButton('W')
         button_write.setObjectName(f'{PRESET_BUTTON_W}_{preset}')
         button_write.setContentsMargins(0, 0, 0, 0)
         button_write.setStyleSheet(style_write)
+        button_write.clicked.connect(self, self.__handle_buttons)
         layout_buttons.addWidget(button_read)
         layout_buttons.addWidget(button_write)
         presets = self.controller.get_presets()
@@ -506,6 +510,22 @@ class DPSMainWindow(QMainWindow):
             astr = acontrol.get_value()
             cmd: str = f'va {vstr} {astr}'
             sender.setEnabled(False)
+        elif sender_name.startswith(PRESET_BUTTON_PREFIX):
+            preset_id = int(sender_name[-1])
+            presets = self.controller.get_presets()
+            if sender_name.startswith(PRESET_BUTTON_R):
+                volts = presets[preset_id].voltage
+                amps = presets[preset_id].current
+                cmd: str = f'va {volts} {amps}'
+            else:
+                vcontrol = self.findChild(dialbar.DialBar, name=VCONTROL_NAME)
+                acontrol = self.findChild(dialbar.DialBar, name=ACONTROL_NAME)
+                vstr = vcontrol.get_value()
+                astr = acontrol.get_value()
+                presets[preset_id].voltage = int(vstr)
+                presets[preset_id].current = int(astr)
+                write_presets()
+
         # Send command
         ret, msg = self.controller.parse_command(cmd)
         self.log(self.__retstr(ret, msg))

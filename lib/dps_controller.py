@@ -40,7 +40,7 @@ class DPSController:
         self.event_thread = None
         self.status: DPSStatus = DPSStatus()
         self.conf = conf
-        self.presets = presets
+        self.presets: list[DPSPreset] = presets
         self.status.port = conf['connection']['tty_port']
         self.status.slave = conf['connection']['slave']
         self.status.baud_rate = conf['connection']['baud_rate']
