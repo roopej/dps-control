@@ -518,10 +518,10 @@ class DPSMainWindow(QMainWindow):
             if sender_name.startswith(PRESET_BUTTON_W):
                 vcontrol = self.findChild(dialbar.DialBar, name=VCONTROL_NAME)
                 acontrol = self.findChild(dialbar.DialBar, name=ACONTROL_NAME)
-                vstr = vcontrol.get_value()
-                astr = acontrol.get_value()
-                presets[preset_id].voltage = int(vstr)
-                presets[preset_id].current = int(astr)
+                volts = vcontrol.get_value()
+                amps = acontrol.get_value()
+                presets[preset_id].voltage = volts
+                presets[preset_id].current = amps
                 self.controller.update_presets()
                 return
             else:

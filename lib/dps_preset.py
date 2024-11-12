@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 from yaml import safe_load, YAMLError, dump
 from dataclasses import dataclass
 
@@ -28,14 +29,15 @@ def read_presets(filename: str) -> list[DPSPreset]:
 def write_presets(filename: str, presets: list[DPSPreset]) -> None:
     """Write list of presets into file"""
     bundle_dir = getattr(sys, '_MEIPASS', os.path.abspath(os.path.dirname(__file__)))
-    path_to_presets = os.path.abspath(os.path.join(bundle_dir, filename))
+    file_dir = Path(bundle_dir).parent.absolute()
+    path_to_presets = Path(os.path.join(file_dir, filename))
 
     writestr = str()
     for i in range (0,5):
         writestr += f'{i+1}:\n'
-        writestr += f'\tv:{presets[i].voltage}\n'
-        writestr += f'\ta:{presets[i].current}\n'
-        writestr += f'\tw:{presets[i].power}\n'
+        writestr += f'   v: {presets[i].voltage}\n'
+        writestr += f'   a: {presets[i].current}\n'
+        writestr += f'   w: {presets[i].power}\n'
 
     with open(path_to_presets, 'w') as file:
         file.write(writestr)
